@@ -1,5 +1,3 @@
-// Mobil dikey Okey oyunu: 7 taş, sürükle bırak ile taş ekle/geri al (çift yönlü drag & drop)
-
 const colors = ['Kırmızı', 'Siyah', 'Yeşil', 'Mavi'];
 const colorCodes = {
     'Kırmızı': '#e74c3c',
@@ -15,10 +13,7 @@ let board = [];
 let score = 0;
 const targetScore = 100;
 
-// Sürüklenen taş bilgisi
-let dragSource = null;   // taş objesi
-let dragIndex = null;    // taşın indexi
-let dragFrom = null;     // 'istaka' veya 'board'
+let dragSource = null, dragIndex = null, dragFrom = null;
 
 function getRandomTile(){
     const color = colors[Math.floor(Math.random() * colors.length)];
@@ -26,8 +21,8 @@ function getRandomTile(){
     return { color, number };
 }
 
-function refillIstaka(){
-    while (istaka.length < istakaSize){
+function refillIstaka() {
+    while (istaka.length < istakaSize) {
         istaka.push(getRandomTile());
     }
 }
@@ -88,7 +83,7 @@ function renderBoard(){
     });
 }
 
-// Drag & Drop events
+// Drag&Drop events
 function setupDroppableAreas() {
     // Board'a taş bırakma
     const boardDiv = document.getElementById('board');
@@ -103,15 +98,10 @@ function setupDroppableAreas() {
         e.preventDefault();
         boardDiv.classList.remove('drag-over');
         if (dragSource && dragFrom === 'istaka' && istaka.length >= dragIndex) {
-            // Taşı istakadan board'a taşı
             board.push(dragSource);
             istaka.splice(dragIndex, 1);
-            refillIstaka();
             renderIstaka();
             renderBoard();
-            autoCheckSet();
-        } else if (dragSource && dragFrom === 'board') {
-            // Board'dan board'a sürükleme: bir şey yapma
         }
     });
 
@@ -128,16 +118,13 @@ function setupDroppableAreas() {
         e.preventDefault();
         istakaDiv.classList.remove('drag-over');
         if (dragSource && dragFrom === 'board' && board.length >= dragIndex) {
-            // Taşı board'dan istakaya al (en sağa ekle)
             if (istaka.length < istakaSize) {
                 istaka.push(dragSource);
                 board.splice(dragIndex, 1);
-                refillIstaka();
                 renderIstaka();
                 renderBoard();
-                autoCheckSet();
             } else {
-                showMessage("Istaka dolu! Önce taş aç.");
+                showMessage("Istaka dolu! El açmalısın.");
             }
         }
     });
@@ -171,7 +158,7 @@ function updateScore(points){
     }
 }
 
-// --- SET KONTROLÜ VE OTOMATİK PUANLAMA ---
+// SET KONTROLÜ VE PUANLAMA (Sadece El Aç ile)
 function checkSet(tiles){
     if(tiles.length !== 3) return 0;
     // Aynı renk kontrolü (numaralar farklı olacak)
@@ -192,25 +179,45 @@ function checkSet(tiles){
     return 0;
 }
 
-// Board üstünde her yeni eklemede baştan sona 3lü setleri kontrol et
-function autoCheckSet() {
+function handleOpenSet() {
     let i = 0;
-    let anySet = false;
-    while (i <= board.length - 3) {
-        const candidate = board.slice(i, i+3);
+    let totalPoints = 0;
+    let setsFound = 0;
+    let boardCopy = [...board];
+    while (i <= boardCopy.length - 3) {
+        const candidate = boardCopy.slice(i, i+3);
         const points = checkSet(candidate);
         if (points > 0) {
-            // Set bulundu: puan ver, board'dan 3'lü grubu sil
-            updateScore(points);
-            showMessage(points + " puan kazandınız!", 1400);
-            board.splice(i, 3);
-            renderBoard();
-            anySet = true;
-            // Aynı yerde tekrar kontrol et (yeni kayma olabilir)
+            totalPoints += points;
+            setsFound++;
+            boardCopy.splice(i, 3);
         } else {
             i++;
         }
     }
+    // Uygula:
+    if (setsFound > 0) {
+        updateScore(totalPoints);
+        showMessage(`${setsFound} set açıldı, +${totalPoints} puan!`, 1700);
+        // Gerçek board'u da aynı şekilde güncelle
+        i = 0;
+        while (i <= board.length - 3) {
+            const candidate = board.slice(i, i+3);
+            const points = checkSet(candidate);
+            if (points > 0) {
+                board.splice(i, 3);
+            } else {
+                i++;
+            }
+        }
+    } else {
+        showMessage("Açılacak uygun set yok!", 1700);
+    }
+    // Eksik taş kadar yeni taş ver
+    let eksik = istakaSize - istaka.length;
+    for(let k=0; k<eksik; k++) istaka.push(getRandomTile());
+    renderIstaka();
+    renderBoard();
 }
 
 function renderTargetScore(){
@@ -221,15 +228,16 @@ function startGame(){
     istaka = [];
     board = [];
     score = 0;
-    refillIstaka();
+    for(let i=0;i<istakaSize;i++) istaka.push(getRandomTile());
     renderIstaka();
     renderBoard();
     renderTargetScore();
     updateScore(0);
-    showMessage("Taşları sürükleyerek yukarı açabilir, geri almak için aşağıya çekebilirsin!", 3500);
+    showMessage("Taşları sürükleyerek aç, el açınca puan kazanıp yeni taş alırsın.", 3500);
 }
 
 window.onload = function() {
     startGame();
     setupDroppableAreas();
+    document.getElementById('open-set-btn').onclick = handleOpenSet;
 };

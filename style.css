@@ -138,6 +138,23 @@ h1 {
     border: 2px solid #27ae60 !important;
 }
 
+#open-set-btn {
+    display: block;
+    margin: 12px auto 24px auto;
+    padding: 12px 40px;
+    background: #27ae60;
+    color: #fff;
+    border: none;
+    border-radius: 13px;
+    font-size: 1.35rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px #27ae6036;
+    transition: background 0.18s;
+}
+#open-set-btn:active { background: #229954; }
+
 /* Mobil görünüm için */
 @media (max-width: 600px) {
     h1 { font-size: 1.3rem; }
@@ -161,6 +178,7 @@ h1 {
         max-width: 97vw;
         overflow-x: auto;
     }
+    #open-set-btn { font-size: 1.09rem; padding: 10px 12vw; }
 }
 
 /* Dikey ekran için */
