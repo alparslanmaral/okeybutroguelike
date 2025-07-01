@@ -1,0 +1,124 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #f2f2f2;
+    text-align: center;
+}
+
+h1 {
+    margin-bottom: 10px;
+}
+
+#target-score {
+    font-size: 20px;
+    margin: 10px 0 3px 0;
+    color: #8e44ad;
+}
+
+#score {
+    margin-bottom: 10px;
+}
+
+#message {
+    margin: 10px auto 20px auto;
+    padding: 10px 20px;
+    min-width: 200px;
+    max-width: 400px;
+    background: #f8c471;
+    color: #633c14;
+    border-radius: 7px;
+    font-weight: bold;
+    font-size: 18px;
+    display: none;
+    transition: all 0.3s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+}
+#message.visible {
+    display: block;
+}
+#message.hidden {
+    display: none;
+}
+
+#board-area {
+    margin-top: 25px;
+    margin-bottom: 30px;
+}
+
+#board-label {
+    font-weight: bold;
+    color: #2471a3;
+    margin-bottom: 8px;
+}
+
+#board {
+    min-height: 70px;
+    min-width: 300px;
+    border-radius: 12px;
+    background: #eaf2f8;
+    box-shadow: 0 4px 14px rgba(52, 152, 219, 0.13);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 12px 6px;
+    min-width: 360px;
+    margin: 0 auto;
+}
+
+#istaka-area {
+    margin-top: 35px;
+    margin-bottom: 15px;
+}
+
+#istaka-label {
+    font-weight: bold;
+    color: #b9770e;
+    margin-bottom: 7px;
+}
+
+#istaka {
+    display: flex;
+    justify-content: center;
+    align-items: end;
+    background: #f7dc6f;
+    border: 3px solid #b9770e;
+    border-radius: 18px 18px 32px 32px;
+    padding: 20px 14px 32px 14px;
+    min-width: 390px;
+    min-height: 92px;
+    margin: 0 auto;
+    box-shadow: 0 6px 24px rgba(241, 196, 15, 0.15);
+    position: relative;
+    overflow-x: auto;
+}
+
+.tile {
+    width: 40px;
+    height: 60px;
+    margin: 0 6px;
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    border: 2px solid #7f8c8d;
+    user-select: none;
+    box-sizing: border-box;
+    transition: border 0.2s, background 0.2s, transform 0.1s;
+    box-shadow: 0 2px 8px #aaa2;
+}
+
+.tile:active {
+    transform: scale(0.94);
+}
+
+.tile.board {
+    cursor: pointer;
+    opacity: 1;
+    border: 2px solid #2980b9;
+}
+
+.tile.istaka {
+    background: #f9e79f;
+}
