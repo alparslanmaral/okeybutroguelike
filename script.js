@@ -1,4 +1,4 @@
-// Mobil dikey Okey oyunu: 7 taş, sürükle bırak ile taş ekle/geri al
+// Mobil dikey Okey oyunu: 7 taş, sürükle bırak ile taş ekle/geri al (çift yönlü drag & drop)
 
 const colors = ['Kırmızı', 'Siyah', 'Yeşil', 'Mavi'];
 const colorCodes = {
@@ -16,9 +16,9 @@ let score = 0;
 const targetScore = 100;
 
 // Sürüklenen taş bilgisi
-let dragSource = null;
-let dragIndex = null;
-let dragFrom = null;
+let dragSource = null;   // taş objesi
+let dragIndex = null;    // taşın indexi
+let dragFrom = null;     // 'istaka' veya 'board'
 
 function getRandomTile(){
     const color = colors[Math.floor(Math.random() * colors.length)];
