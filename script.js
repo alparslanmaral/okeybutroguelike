@@ -23,8 +23,8 @@ function getRandomTile(){
     return { color, number };
 }
 
-function refillIstaka() {
-    while (istaka.length < istakaSize) {
+function fillIstakaToSeven() {
+    while (istaka.length < istakaSize && (istaka.length + board.length) < istakaSize) {
         istaka.push(getRandomTile());
     }
 }
@@ -95,7 +95,7 @@ function renderBoard(){
     });
 }
 
-// MASAÜSTÜ Drag&Drop events
+// Drag & Drop events (masaüstü)
 function setupDroppableAreas() {
     // Board'a taş bırakma
     const boardDiv = document.getElementById('board');
@@ -112,11 +112,14 @@ function setupDroppableAreas() {
         if (isTouchDragging) return;
         e.preventDefault();
         boardDiv.classList.remove('drag-over');
+        // Sadece toplam taş sayısı 7 ise board'a taş atılabilir
         if (dragSource && dragFrom === 'istaka' && istaka.length >= dragIndex) {
-            board.push(dragSource);
-            istaka.splice(dragIndex, 1);
-            renderIstaka();
-            renderBoard();
+            if ((board.length + istaka.length) <= istakaSize && istaka.length > 0) {
+                board.push(dragSource);
+                istaka.splice(dragIndex, 1);
+                renderIstaka();
+                renderBoard();
+            }
         }
     });
 
@@ -136,7 +139,8 @@ function setupDroppableAreas() {
         e.preventDefault();
         istakaDiv.classList.remove('drag-over');
         if (dragSource && dragFrom === 'board' && board.length >= dragIndex) {
-            if (istaka.length < istakaSize) {
+            // Sadece toplam taş sayısı 7 ise ıstakaya taş alınabilir
+            if ((board.length + istaka.length) < istakaSize) {
                 istaka.push(dragSource);
                 board.splice(dragIndex, 1);
                 renderIstaka();
@@ -154,7 +158,6 @@ function removeAllDragOver() {
 
 // --- MOBİL TOUCH SÜRÜKLEME ---
 function getTouchTargetArea(x, y) {
-    // Hedef alanı bulur (istaka veya board)
     const istakaDiv = document.getElementById('istaka');
     const boardDiv = document.getElementById('board');
     const istakaRect = istakaDiv.getBoundingClientRect();
@@ -169,12 +172,11 @@ function getTouchTargetArea(x, y) {
 }
 
 function handleTouchStart(e, tile, idx, from) {
-    if (e.touches.length > 1) return; // multi-touch ignore
+    if (e.touches.length > 1) return;
     isTouchDragging = true;
     dragSource = tile;
     dragIndex = idx;
     dragFrom = from;
-    // Ghost taş oluştur
     ghost = document.createElement('div');
     ghost.className = 'tile ghost-drag';
     ghost.style.position = 'fixed';
@@ -201,7 +203,6 @@ function handleTouchMove(e) {
     ghost.style.left = (x - 24) + 'px';
     ghost.style.top = (y - 34) + 'px';
 
-    // Hover efekti
     const target = getTouchTargetArea(x, y);
     document.getElementById('istaka').classList.toggle('drag-over', target === 'istaka');
     document.getElementById('board').classList.toggle('drag-over', target === 'board');
@@ -217,21 +218,21 @@ function handleTouchEnd(e) {
         x = e.touches[0].clientX;
         y = e.touches[0].clientY;
     }
-    // Hedef alanı bul
     const target = getTouchTargetArea(x, y);
 
     document.getElementById('istaka').classList.remove('drag-over');
     document.getElementById('board').classList.remove('drag-over');
 
-    // Taşı bırak
     if (target && dragSource !== null && dragFrom !== null) {
         if (dragFrom === 'istaka' && target === 'board') {
-            board.push(dragSource);
-            istaka.splice(dragIndex, 1);
-            renderIstaka();
-            renderBoard();
+            if ((board.length + istaka.length) <= istakaSize && istaka.length > 0) {
+                board.push(dragSource);
+                istaka.splice(dragIndex, 1);
+                renderIstaka();
+                renderBoard();
+            }
         } else if (dragFrom === 'board' && target === 'istaka') {
-            if (istaka.length < istakaSize) {
+            if ((board.length + istaka.length) < istakaSize) {
                 istaka.push(dragSource);
                 board.splice(dragIndex, 1);
                 renderIstaka();
@@ -241,7 +242,6 @@ function handleTouchEnd(e) {
             }
         }
     }
-    // Temizle
     document.body.removeEventListener('touchmove', handleTouchMove);
     document.body.removeEventListener('touchend', handleTouchEnd);
     if (ghost && ghost.parentNode) ghost.parentNode.removeChild(ghost);
@@ -323,7 +323,9 @@ function handleOpenSet() {
     } else {
         showMessage("Açılacak uygun set yok!", 1700);
     }
-    let eksik = istakaSize - istaka.length;
+    // Sadece toplam taş sayısı < 7 ise yeni taş ver
+    let toplamTas = istaka.length + board.length;
+    let eksik = istakaSize - toplamTas;
     for(let k=0; k<eksik; k++) istaka.push(getRandomTile());
     renderIstaka();
     renderBoard();
@@ -342,7 +344,7 @@ function startGame(){
     renderBoard();
     renderTargetScore();
     updateScore(0);
-    showMessage("Taşları dokunup sürükleyerek aç, el açınca puan kazanıp yeni taş alırsın.", 3500);
+    showMessage("Taşları sürükleyerek aç, el açınca puan kazanıp yeni taş alırsın.", 3500);
 }
 
 window.onload = function() {
