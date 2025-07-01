@@ -192,3 +192,10 @@ h1 {
         max-width: 99vw;
     }
 }
+
+.tile.ghost-drag {
+    pointer-events: none;
+    opacity: 0.9;
+    box-shadow: 0 4px 20px #3338;
+    border: 2px solid #aaa;
+}

@@ -14,6 +14,8 @@ let score = 0;
 const targetScore = 100;
 
 let dragSource = null, dragIndex = null, dragFrom = null;
+let isTouchDragging = false;
+let ghost = null, ghostOrigin = null;
 
 function getRandomTile(){
     const color = colors[Math.floor(Math.random() * colors.length)];
@@ -38,19 +40,24 @@ function renderIstaka(){
         el.innerText = tile.number;
         el.title = tile.color + ' ' + tile.number;
         el.setAttribute('draggable', 'true');
+        // MASAÜSTÜ drag & drop
         el.addEventListener('dragstart', (e) => {
+            if (isTouchDragging) return;
             dragSource = tile;
             dragIndex = idx;
             dragFrom = 'istaka';
             setTimeout(() => el.classList.add('dragging'), 0);
         });
         el.addEventListener('dragend', (e) => {
+            if (isTouchDragging) return;
             el.classList.remove('dragging');
             dragSource = null;
             dragIndex = null;
             dragFrom = null;
             removeAllDragOver();
         });
+        // MOBİL dokunarak sürükleme
+        el.addEventListener('touchstart', (e) => handleTouchStart(e, tile, idx, 'istaka'));
         istakaDiv.appendChild(el);
     });
 }
@@ -66,35 +73,43 @@ function renderBoard(){
         el.innerText = tile.number;
         el.title = tile.color + ' ' + tile.number;
         el.setAttribute('draggable', 'true');
+        // MASAÜSTÜ drag & drop
         el.addEventListener('dragstart', (e) => {
+            if (isTouchDragging) return;
             dragSource = tile;
             dragIndex = idx;
             dragFrom = 'board';
             setTimeout(() => el.classList.add('dragging'), 0);
         });
         el.addEventListener('dragend', (e) => {
+            if (isTouchDragging) return;
             el.classList.remove('dragging');
             dragSource = null;
             dragIndex = null;
             dragFrom = null;
             removeAllDragOver();
         });
+        // MOBİL dokunarak sürükleme
+        el.addEventListener('touchstart', (e) => handleTouchStart(e, tile, idx, 'board'));
         boardDiv.appendChild(el);
     });
 }
 
-// Drag&Drop events
+// MASAÜSTÜ Drag&Drop events
 function setupDroppableAreas() {
     // Board'a taş bırakma
     const boardDiv = document.getElementById('board');
     boardDiv.addEventListener('dragover', (e) => {
+        if (isTouchDragging) return;
         e.preventDefault();
         boardDiv.classList.add('drag-over');
     });
     boardDiv.addEventListener('dragleave', (e) => {
+        if (isTouchDragging) return;
         boardDiv.classList.remove('drag-over');
     });
     boardDiv.addEventListener('drop', (e) => {
+        if (isTouchDragging) return;
         e.preventDefault();
         boardDiv.classList.remove('drag-over');
         if (dragSource && dragFrom === 'istaka' && istaka.length >= dragIndex) {
@@ -108,13 +123,16 @@ function setupDroppableAreas() {
     // Istakaya taş bırakma
     const istakaDiv = document.getElementById('istaka');
     istakaDiv.addEventListener('dragover', (e) => {
+        if (isTouchDragging) return;
         e.preventDefault();
         istakaDiv.classList.add('drag-over');
     });
     istakaDiv.addEventListener('dragleave', (e) => {
+        if (isTouchDragging) return;
         istakaDiv.classList.remove('drag-over');
     });
     istakaDiv.addEventListener('drop', (e) => {
+        if (isTouchDragging) return;
         e.preventDefault();
         istakaDiv.classList.remove('drag-over');
         if (dragSource && dragFrom === 'board' && board.length >= dragIndex) {
@@ -132,6 +150,104 @@ function setupDroppableAreas() {
 function removeAllDragOver() {
     document.getElementById('board').classList.remove('drag-over');
     document.getElementById('istaka').classList.remove('drag-over');
+}
+
+// --- MOBİL TOUCH SÜRÜKLEME ---
+function getTouchTargetArea(x, y) {
+    // Hedef alanı bulur (istaka veya board)
+    const istakaDiv = document.getElementById('istaka');
+    const boardDiv = document.getElementById('board');
+    const istakaRect = istakaDiv.getBoundingClientRect();
+    const boardRect = boardDiv.getBoundingClientRect();
+    if (x > istakaRect.left && x < istakaRect.right && y > istakaRect.top && y < istakaRect.bottom) {
+        return 'istaka';
+    }
+    if (x > boardRect.left && x < boardRect.right && y > boardRect.top && y < boardRect.bottom) {
+        return 'board';
+    }
+    return null;
+}
+
+function handleTouchStart(e, tile, idx, from) {
+    if (e.touches.length > 1) return; // multi-touch ignore
+    isTouchDragging = true;
+    dragSource = tile;
+    dragIndex = idx;
+    dragFrom = from;
+    // Ghost taş oluştur
+    ghost = document.createElement('div');
+    ghost.className = 'tile ghost-drag';
+    ghost.style.position = 'fixed';
+    ghost.style.left = (e.touches[0].clientX - 24) + 'px';
+    ghost.style.top = (e.touches[0].clientY - 34) + 'px';
+    ghost.style.background = colorCodes[tile.color];
+    ghost.style.color = tile.color === 'Siyah' ? '#fff' : '#222';
+    ghost.style.width = '48px';
+    ghost.style.height = '68px';
+    ghost.style.zIndex = '9999';
+    ghost.innerText = tile.number;
+    document.body.appendChild(ghost);
+    ghostOrigin = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+
+    document.body.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.body.addEventListener('touchend', handleTouchEnd, { passive: false });
+}
+
+function handleTouchMove(e) {
+    if (!ghost || !isTouchDragging) return;
+    e.preventDefault();
+    const x = e.touches[0].clientX;
+    const y = e.touches[0].clientY;
+    ghost.style.left = (x - 24) + 'px';
+    ghost.style.top = (y - 34) + 'px';
+
+    // Hover efekti
+    const target = getTouchTargetArea(x, y);
+    document.getElementById('istaka').classList.toggle('drag-over', target === 'istaka');
+    document.getElementById('board').classList.toggle('drag-over', target === 'board');
+}
+
+function handleTouchEnd(e) {
+    if (!ghost || !isTouchDragging) return;
+    let x = 0, y = 0;
+    if (e.changedTouches && e.changedTouches.length > 0) {
+        x = e.changedTouches[0].clientX;
+        y = e.changedTouches[0].clientY;
+    } else if (e.touches && e.touches.length > 0) {
+        x = e.touches[0].clientX;
+        y = e.touches[0].clientY;
+    }
+    // Hedef alanı bul
+    const target = getTouchTargetArea(x, y);
+
+    document.getElementById('istaka').classList.remove('drag-over');
+    document.getElementById('board').classList.remove('drag-over');
+
+    // Taşı bırak
+    if (target && dragSource !== null && dragFrom !== null) {
+        if (dragFrom === 'istaka' && target === 'board') {
+            board.push(dragSource);
+            istaka.splice(dragIndex, 1);
+            renderIstaka();
+            renderBoard();
+        } else if (dragFrom === 'board' && target === 'istaka') {
+            if (istaka.length < istakaSize) {
+                istaka.push(dragSource);
+                board.splice(dragIndex, 1);
+                renderIstaka();
+                renderBoard();
+            } else {
+                showMessage("Istaka dolu! El açmalısın.");
+            }
+        }
+    }
+    // Temizle
+    document.body.removeEventListener('touchmove', handleTouchMove);
+    document.body.removeEventListener('touchend', handleTouchEnd);
+    if (ghost && ghost.parentNode) ghost.parentNode.removeChild(ghost);
+    ghost = null;
+    dragSource = null; dragIndex = null; dragFrom = null;
+    isTouchDragging = false;
 }
 
 function showMessage(msg, timeout = 2200) {
@@ -158,23 +274,19 @@ function updateScore(points){
     }
 }
 
-// SET KONTROLÜ VE PUANLAMA (Sadece El Aç ile)
 function checkSet(tiles){
     if(tiles.length !== 3) return 0;
-    // Aynı renk kontrolü (numaralar farklı olacak)
     if(tiles[0].color === tiles[1].color && tiles[1].color === tiles[2].color){
         if(!(tiles[0].number === tiles[1].number && tiles[1].number === tiles[2].number)){
-            return 10; // Aynı renk, farklı numaralar
+            return 10;
         }
     }
-    // Aynı sayı kontrolü (renk farklı olabilir)
     if(tiles[0].number === tiles[1].number && tiles[1].number === tiles[2].number){
-        return 15; // Aynı sayı, renkler önemli değil
+        return 15;
     }
-    // Art arda artan numaralar (renk önemli değil)
     const nums = tiles.map(t => t.number).sort((a,b) => a-b);
     if(nums[1] === nums[0]+1 && nums[2] === nums[1]+1){
-        return 20; // Sıralı, renk önemli değil
+        return 20;
     }
     return 0;
 }
@@ -195,11 +307,9 @@ function handleOpenSet() {
             i++;
         }
     }
-    // Uygula:
     if (setsFound > 0) {
         updateScore(totalPoints);
         showMessage(`${setsFound} set açıldı, +${totalPoints} puan!`, 1700);
-        // Gerçek board'u da aynı şekilde güncelle
         i = 0;
         while (i <= board.length - 3) {
             const candidate = board.slice(i, i+3);
@@ -213,7 +323,6 @@ function handleOpenSet() {
     } else {
         showMessage("Açılacak uygun set yok!", 1700);
     }
-    // Eksik taş kadar yeni taş ver
     let eksik = istakaSize - istaka.length;
     for(let k=0; k<eksik; k++) istaka.push(getRandomTile());
     renderIstaka();
@@ -233,7 +342,7 @@ function startGame(){
     renderBoard();
     renderTargetScore();
     updateScore(0);
-    showMessage("Taşları sürükleyerek aç, el açınca puan kazanıp yeni taş alırsın.", 3500);
+    showMessage("Taşları dokunup sürükleyerek aç, el açınca puan kazanıp yeni taş alırsın.", 3500);
 }
 
 window.onload = function() {
