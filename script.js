@@ -1,4 +1,5 @@
-// Renkler ve sayılar
+// Mobil dikey Okey oyunu: 7 taş, sürükle bırak ile taş ekle/geri al
+
 const colors = ['Kırmızı', 'Siyah', 'Yeşil', 'Mavi'];
 const colorCodes = {
     'Kırmızı': '#e74c3c',
@@ -8,11 +9,16 @@ const colorCodes = {
 };
 const numbers = [1,2,3,4,5,6,7,8,9,10,11,12,13];
 
-const istakaSize = 12;
+const istakaSize = 7;
 let istaka = [];
 let board = [];
 let score = 0;
 const targetScore = 100;
+
+// Sürüklenen taş bilgisi
+let dragSource = null;
+let dragIndex = null;
+let dragFrom = null;
 
 function getRandomTile(){
     const color = colors[Math.floor(Math.random() * colors.length)];
@@ -36,15 +42,20 @@ function renderIstaka(){
         el.style.color = tile.color === 'Siyah' ? '#fff' : '#222';
         el.innerText = tile.number;
         el.title = tile.color + ' ' + tile.number;
-        el.onclick = () => {
-            // Taşı board'a ekle, ıstakadan çıkar
-            board.push(tile);
-            istaka.splice(idx, 1);
-            refillIstaka();
-            renderIstaka();
-            renderBoard();
-            autoCheckSet(); // her eklemede otomatik set kontrolü
-        };
+        el.setAttribute('draggable', 'true');
+        el.addEventListener('dragstart', (e) => {
+            dragSource = tile;
+            dragIndex = idx;
+            dragFrom = 'istaka';
+            setTimeout(() => el.classList.add('dragging'), 0);
+        });
+        el.addEventListener('dragend', (e) => {
+            el.classList.remove('dragging');
+            dragSource = null;
+            dragIndex = null;
+            dragFrom = null;
+            removeAllDragOver();
+        });
         istakaDiv.appendChild(el);
     });
 }
@@ -59,20 +70,84 @@ function renderBoard(){
         el.style.color = tile.color === 'Siyah' ? '#fff' : '#222';
         el.innerText = tile.number;
         el.title = tile.color + ' ' + tile.number;
-        el.onclick = () => {
-            // Taşı geri ıstakaya al (en sağa ekle)
-            istaka.push(tile);
-            board.splice(idx, 1);
-            refillIstaka();
-            renderIstaka();
-            renderBoard();
-            autoCheckSet();
-        };
+        el.setAttribute('draggable', 'true');
+        el.addEventListener('dragstart', (e) => {
+            dragSource = tile;
+            dragIndex = idx;
+            dragFrom = 'board';
+            setTimeout(() => el.classList.add('dragging'), 0);
+        });
+        el.addEventListener('dragend', (e) => {
+            el.classList.remove('dragging');
+            dragSource = null;
+            dragIndex = null;
+            dragFrom = null;
+            removeAllDragOver();
+        });
         boardDiv.appendChild(el);
     });
 }
 
-function showMessage(msg, timeout = 2000) {
+// Drag & Drop events
+function setupDroppableAreas() {
+    // Board'a taş bırakma
+    const boardDiv = document.getElementById('board');
+    boardDiv.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        boardDiv.classList.add('drag-over');
+    });
+    boardDiv.addEventListener('dragleave', (e) => {
+        boardDiv.classList.remove('drag-over');
+    });
+    boardDiv.addEventListener('drop', (e) => {
+        e.preventDefault();
+        boardDiv.classList.remove('drag-over');
+        if (dragSource && dragFrom === 'istaka' && istaka.length >= dragIndex) {
+            // Taşı istakadan board'a taşı
+            board.push(dragSource);
+            istaka.splice(dragIndex, 1);
+            refillIstaka();
+            renderIstaka();
+            renderBoard();
+            autoCheckSet();
+        } else if (dragSource && dragFrom === 'board') {
+            // Board'dan board'a sürükleme: bir şey yapma
+        }
+    });
+
+    // Istakaya taş bırakma
+    const istakaDiv = document.getElementById('istaka');
+    istakaDiv.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        istakaDiv.classList.add('drag-over');
+    });
+    istakaDiv.addEventListener('dragleave', (e) => {
+        istakaDiv.classList.remove('drag-over');
+    });
+    istakaDiv.addEventListener('drop', (e) => {
+        e.preventDefault();
+        istakaDiv.classList.remove('drag-over');
+        if (dragSource && dragFrom === 'board' && board.length >= dragIndex) {
+            // Taşı board'dan istakaya al (en sağa ekle)
+            if (istaka.length < istakaSize) {
+                istaka.push(dragSource);
+                board.splice(dragIndex, 1);
+                refillIstaka();
+                renderIstaka();
+                renderBoard();
+                autoCheckSet();
+            } else {
+                showMessage("Istaka dolu! Önce taş aç.");
+            }
+        }
+    });
+}
+function removeAllDragOver() {
+    document.getElementById('board').classList.remove('drag-over');
+    document.getElementById('istaka').classList.remove('drag-over');
+}
+
+function showMessage(msg, timeout = 2200) {
     const msgDiv = document.getElementById('message');
     msgDiv.innerText = msg;
     msgDiv.classList.remove('hidden');
@@ -127,7 +202,7 @@ function autoCheckSet() {
         if (points > 0) {
             // Set bulundu: puan ver, board'dan 3'lü grubu sil
             updateScore(points);
-            showMessage(points + " puan kazandınız!", 1800);
+            showMessage(points + " puan kazandınız!", 1400);
             board.splice(i, 3);
             renderBoard();
             anySet = true;
@@ -142,7 +217,6 @@ function renderTargetScore(){
     document.getElementById('target-score').innerText = `Hedef Puan: ${targetScore}`;
 }
 
-// Oyun başlangıcı
 function startGame(){
     istaka = [];
     board = [];
@@ -152,7 +226,10 @@ function startGame(){
     renderBoard();
     renderTargetScore();
     updateScore(0);
-    showMessage("Taş eklemek için ISTAKA'daki taşa tıkla. Açılan taşları geri almak için üzerine tıkla.", 4000);
+    showMessage("Taşları sürükleyerek yukarı açabilir, geri almak için aşağıya çekebilirsin!", 3500);
 }
 
-startGame();
+window.onload = function() {
+    startGame();
+    setupDroppableAreas();
+};
