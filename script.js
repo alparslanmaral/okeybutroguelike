@@ -15,7 +15,7 @@ const JOKER = { color: "Joker", number: 0 }; // Joker taş
 
 const levelTargets = [50, 120, 200, 300, 420, 570, 750, 900, 1200, 2000];
 const levelMax = levelTargets.length;
-const changeStonesMax = 1000;
+const changeStonesMax = 10;
 
 // ------------------------------
 // === OYUN DURUMU ===
