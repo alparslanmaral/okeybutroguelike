@@ -134,6 +134,13 @@ h1 {
     background: #f9e79f;
 }
 
+.tile.ghost-drag {
+    pointer-events: none;
+    opacity: 0.9;
+    box-shadow: 0 4px 20px #3338;
+    border: 2px solid #aaa;
+}
+
 .droppable.drag-over {
     border: 2px solid #27ae60 !important;
 }
@@ -191,11 +198,4 @@ h1 {
     #board-area, #istaka-area {
         max-width: 99vw;
     }
-}
-
-.tile.ghost-drag {
-    pointer-events: none;
-    opacity: 0.9;
-    box-shadow: 0 4px 20px #3338;
-    border: 2px solid #aaa;
 }

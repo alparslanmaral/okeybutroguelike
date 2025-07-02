@@ -15,18 +15,12 @@ const targetScore = 100;
 
 let dragSource = null, dragIndex = null, dragFrom = null;
 let isTouchDragging = false;
-let ghost = null, ghostOrigin = null;
+let ghost = null;
 
 function getRandomTile(){
     const color = colors[Math.floor(Math.random() * colors.length)];
     const number = numbers[Math.floor(Math.random() * numbers.length)];
     return { color, number };
-}
-
-function fillIstakaToSeven() {
-    while (istaka.length < istakaSize && (istaka.length + board.length) < istakaSize) {
-        istaka.push(getRandomTile());
-    }
 }
 
 function renderIstaka(){
@@ -95,7 +89,6 @@ function renderBoard(){
     });
 }
 
-// Drag & Drop events (masaüstü)
 function setupDroppableAreas() {
     // Board'a taş bırakma
     const boardDiv = document.getElementById('board');
@@ -112,7 +105,6 @@ function setupDroppableAreas() {
         if (isTouchDragging) return;
         e.preventDefault();
         boardDiv.classList.remove('drag-over');
-        // Sadece toplam taş sayısı 7 ise board'a taş atılabilir
         if (dragSource && dragFrom === 'istaka' && istaka.length >= dragIndex) {
             if ((board.length + istaka.length) <= istakaSize && istaka.length > 0) {
                 board.push(dragSource);
@@ -139,15 +131,11 @@ function setupDroppableAreas() {
         e.preventDefault();
         istakaDiv.classList.remove('drag-over');
         if (dragSource && dragFrom === 'board' && board.length >= dragIndex) {
-            // Sadece toplam taş sayısı 7 ise ıstakaya taş alınabilir
-            if ((board.length + istaka.length) < istakaSize) {
-                istaka.push(dragSource);
-                board.splice(dragIndex, 1);
-                renderIstaka();
-                renderBoard();
-            } else {
-                showMessage("Istaka dolu! El açmalısın.");
-            }
+            // YENİ: Board'dan ıstakaya taş her zaman alınabilmeli!
+            istaka.push(dragSource);
+            board.splice(dragIndex, 1);
+            renderIstaka();
+            renderBoard();
         }
     });
 }
@@ -189,7 +177,6 @@ function handleTouchStart(e, tile, idx, from) {
     ghost.style.zIndex = '9999';
     ghost.innerText = tile.number;
     document.body.appendChild(ghost);
-    ghostOrigin = { x: e.touches[0].clientX, y: e.touches[0].clientY };
 
     document.body.addEventListener('touchmove', handleTouchMove, { passive: false });
     document.body.addEventListener('touchend', handleTouchEnd, { passive: false });
@@ -232,14 +219,11 @@ function handleTouchEnd(e) {
                 renderBoard();
             }
         } else if (dragFrom === 'board' && target === 'istaka') {
-            if ((board.length + istaka.length) < istakaSize) {
-                istaka.push(dragSource);
-                board.splice(dragIndex, 1);
-                renderIstaka();
-                renderBoard();
-            } else {
-                showMessage("Istaka dolu! El açmalısın.");
-            }
+            // YENİ: Board'dan ıstakaya taş her zaman alınabilmeli!
+            istaka.push(dragSource);
+            board.splice(dragIndex, 1);
+            renderIstaka();
+            renderBoard();
         }
     }
     document.body.removeEventListener('touchmove', handleTouchMove);
@@ -295,14 +279,15 @@ function handleOpenSet() {
     let i = 0;
     let totalPoints = 0;
     let setsFound = 0;
-    let boardCopy = [...board];
-    while (i <= boardCopy.length - 3) {
-        const candidate = boardCopy.slice(i, i+3);
+    let removeIndices = [];
+    while (i <= board.length - 3) {
+        const candidate = board.slice(i, i+3);
         const points = checkSet(candidate);
         if (points > 0) {
             totalPoints += points;
             setsFound++;
-            boardCopy.splice(i, 3);
+            removeIndices.push(i, i+1, i+2);
+            i += 3;
         } else {
             i++;
         }
@@ -310,23 +295,15 @@ function handleOpenSet() {
     if (setsFound > 0) {
         updateScore(totalPoints);
         showMessage(`${setsFound} set açıldı, +${totalPoints} puan!`, 1700);
-        i = 0;
-        while (i <= board.length - 3) {
-            const candidate = board.slice(i, i+3);
-            const points = checkSet(candidate);
-            if (points > 0) {
-                board.splice(i, 3);
-            } else {
-                i++;
-            }
-        }
+        removeIndices.sort((a,b)=>b-a).forEach(idx => board.splice(idx,1));
+        // Sadece set açılırsa eksik taş ver
+        let toplamTas = istaka.length + board.length;
+        let eksik = istakaSize - toplamTas;
+        for(let k=0; k<eksik; k++) istaka.push(getRandomTile());
     } else {
         showMessage("Açılacak uygun set yok!", 1700);
+        // HİÇ YENİ TAŞ VERME!
     }
-    // Sadece toplam taş sayısı < 7 ise yeni taş ver
-    let toplamTas = istaka.length + board.length;
-    let eksik = istakaSize - toplamTas;
-    for(let k=0; k<eksik; k++) istaka.push(getRandomTile());
     renderIstaka();
     renderBoard();
 }
