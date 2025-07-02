@@ -162,6 +162,143 @@ h1 {
 }
 #open-set-btn:active { background: #229954; }
 
+#change-stones-area {
+    margin-bottom: 12px;
+}
+
+#change-stones-btn {
+    padding: 10px 25px;
+    font-size: 1.07rem;
+    font-weight: bold;
+    background: #2980b9;
+    color: #fff;
+    border-radius: 9px;
+    border: none;
+    cursor: pointer;
+    transition: background 0.18s;
+    margin-top: 2px;
+    margin-bottom: 8px;
+}
+#change-stones-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+#confirm-change-btn {
+    margin-left: 10px;
+    background: #e67e22;
+    color: #fff;
+    border: none;
+    border-radius: 9px;
+    padding: 10px 24px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+}
+#confirm-change-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.tile.istaka.selectable {
+    cursor: pointer;
+    box-shadow: 0 0 0 3px #2980b988;
+}
+.tile.istaka.selected {
+    border: 3px solid #e67e22;
+    box-shadow: 0 0 0 4px #e67e2288;
+}
+
+#show-pool-btn {
+    padding: 10px 25px;
+    font-size: 1.07rem;
+    font-weight: bold;
+    background: #34495e;
+    color: #fff;
+    border-radius: 9px;
+    border: none;
+    cursor: pointer;
+    margin: 12px auto 16px auto;
+    display: block;
+}
+#show-pool-btn:active { background: #232d36; }
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 199;
+    left: 0; top: 0; width: 100vw; height: 100vh;
+    overflow: auto;
+    background: rgba(0,0,0,0.34);
+}
+.modal-content {
+    background: #f2f2f2;
+    margin: 5% auto;
+    padding: 26px 16px 24px 16px;
+    border-radius: 17px;
+    width: 95vw;
+    max-width: 430px;
+    min-height: 120px;
+    box-shadow: 0 6px 44px #2223;
+    position: relative;
+    text-align: left;
+}
+#pool-list {
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 6px;
+    gap: 7px;
+    justify-content: flex-start;
+}
+.pool-tile-outer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 38px;
+    margin: 0 3px 8px 3px;
+}
+.pool-tile-kalan {
+    font-size: 0.85em;
+    color: #444;
+    margin-top: 3px;
+    text-align: center;
+    font-weight: normal;
+    opacity: 0.82;
+    letter-spacing: 0.2px;
+    background: none;
+    border-radius: 0;
+    min-width: 34px;
+}
+.pool-tile {
+    width: 34px;
+    height: 46px;
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin: 0 2px 0 2px;
+    border: 2px solid #bfc9ca;
+    background: #fafafa;
+    box-shadow: 0 2px 4px #9992;
+    position: relative;
+}
+.pool-tile.kırmızı { background: #e74c3c; color: #fff; }
+.pool-tile.siyah   { background: #2d3436; color: #fff; }
+.pool-tile.yeşil   { background: #27ae60; color: #fff; }
+.pool-tile.mavi    { background: #2980b9; color: #fff; }
+.pool-tile.joker   { background: #e67e22; color: #fff; font-size: 1.3rem; }
+.close {
+    position: absolute;
+    right: 14px; top: 12px;
+    font-size: 2.1rem;
+    font-weight: bold;
+    color: #a93226;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.close:hover { color: #922b21; }
+
 /* Mobil görünüm için */
 @media (max-width: 600px) {
     h1 { font-size: 1.3rem; }
@@ -185,7 +322,7 @@ h1 {
         max-width: 97vw;
         overflow-x: auto;
     }
-    #open-set-btn { font-size: 1.09rem; padding: 10px 12vw; }
+    #open-set-btn, #change-stones-btn, #confirm-change-btn, #show-pool-btn { font-size: 1rem; padding: 9px 6vw; }
 }
 
 /* Dikey ekran için */
