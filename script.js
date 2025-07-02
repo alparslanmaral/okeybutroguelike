@@ -7,6 +7,8 @@
 // - Her taş bir sette yalnızca bir defa kullanılır
 // - Oyuncunun 10 el açma ve 3 taş değiştirme hakkı vardır, haklar bitip set çıkmazsa oyun biter ve tekrar başlatılır
 // - Taş değiştirme modundan iptal ile çıkılabilir
+// - Kalan taş değiştirme hakkı ve kalan el açma hakkı, ilgili butonların yanında ve altında görünür
+// - Mobil ve masaüstü uyumlu, responsive arayüz (taşmayan tuşlar ve alanlar)
 
 // ------------------------------
 // === AYARLAR ===
@@ -183,6 +185,7 @@ function renderIstaka() {
                 }
                 renderIstaka();
                 renderChangeStonesArea();
+                renderOpenSetArea();
             };
         } else {
             el.onclick = null;
@@ -410,18 +413,6 @@ function updateScore(points){
         }
     }
 }
-function renderOpenSetArea() {
-    const el = document.getElementById('open-set-rights');
-    if (el) {
-        if (openSetRemaining > 1) {
-            el.innerText = `Kalan el açma hakkı: ${openSetRemaining} adet`;
-        } else if (openSetRemaining === 1) {
-            el.innerText = `Kalan el açma hakkı: 1 adet (son hak!)`;
-        } else {
-            el.innerText = `El açma hakkın kalmadı.`;
-        }
-    }
-}
 function handleOpenSet() {
     if (gameOver) return;
     if (openSetRemaining <= 0) {
@@ -483,8 +474,7 @@ function hideGameOver() {
     startGame();
 }
 
-// --- Taş değiştirme tuşları eventleri ---
-// Artık bir de İPTAL tuşu var!
+// --- Taş değiştirme tuşları eventleri (onayla & iptal) ---
 function setupChangeStonesEvents() {
     const changeBtn = document.getElementById('change-stones-btn');
     const confirmBtn = document.getElementById('confirm-change-btn');
@@ -505,6 +495,7 @@ function setupChangeStonesEvents() {
             selectedForChange = [];
             renderIstaka();
             renderChangeStonesArea();
+            renderOpenSetArea();
         }
     };
     document.getElementById('confirm-change-btn').onclick = () => {
@@ -518,6 +509,7 @@ function setupChangeStonesEvents() {
         selectedForChange = [];
         renderIstaka();
         renderChangeStonesArea();
+        renderOpenSetArea();
         showMessage("Seçilen taşlar değiştirildi.", 1400);
         if (changeStonesRemaining === 0) {
             checkGameOverAfterRights();
@@ -529,41 +521,21 @@ function setupChangeStonesEvents() {
         selectedForChange = [];
         renderIstaka();
         renderChangeStonesArea();
+        renderOpenSetArea();
         showMessage("Taş değiştirme iptal edildi.", 1200);
     };
 }
 
 function renderChangeStonesArea() {
-    const countDiv = document.getElementById('change-stones-count');
-    countDiv.innerText = `(${changeStonesRemaining} hak)`;
     const btn = document.getElementById('change-stones-btn');
-    btn.disabled = changeStonesRemaining === 0 || isChangingStones || pool.length === 0 || gameOver;
     const confirmBtn = document.getElementById('confirm-change-btn');
     const cancelBtn = document.getElementById('cancel-change-btn');
+    btn.disabled = changeStonesRemaining === 0 || isChangingStones || pool.length === 0 || gameOver;
     confirmBtn.style.display = isChangingStones ? 'inline-block' : 'none';
     confirmBtn.disabled = selectedForChange.length === 0;
     cancelBtn.style.display = isChangingStones ? 'inline-block' : 'none';
 }
 
-function startGame(){
-    pool = createPool();
-    istaka = [];
-    board = [];
-    changeStonesRemaining = changeStonesMax;
-    openSetRemaining = openSetMax;
-    isChangingStones = false;
-    selectedForChange = [];
-    gameOver = false;
-    istaka = drawFromPool(istakaSize);
-    renderIstaka();
-    renderBoard();
-    renderTargetScore();
-    renderChangeStonesArea();
-    renderOpenSetArea();
-    document.getElementById('score').innerText = `Puan: ${score}`;
-    showMessage("Taşları sürükleyerek aç, el açınca puan kazanıp yeni taş alırsın.", 1800);
-    setupChangeStonesEvents();
-}
 function renderPoolModal() {
     const poolListDiv = document.getElementById('pool-list');
     let counts = {};
@@ -609,6 +581,42 @@ function setupPoolModalEvents() {
         if (evt.target === modal) modal.style.display = "none";
     });
 }
+
+function renderOpenSetArea() {
+    const el = document.getElementById('open-set-rights');
+    if (el) {
+        if (openSetRemaining > 1) el.innerText = `Kalan el açma hakkı: ${openSetRemaining} adet`;
+        else if (openSetRemaining === 1) el.innerText = `Kalan el açma hakkı: 1 adet (son hak!)`;
+        else el.innerText = `El açma hakkın kalmadı.`;
+    }
+    const hak = document.getElementById('change-stones-hak');
+    if (hak) hak.innerText = `(Kalan taş değiştirme hakkı: ${changeStonesRemaining})`;
+}
+
+function renderTargetScore(){
+    document.getElementById('target-score').innerText = `Seviye: ${level} / 10 — Hedef Puan: ${levelTargets[level-1]}`;
+}
+
+function startGame(){
+    pool = createPool();
+    istaka = [];
+    board = [];
+    changeStonesRemaining = changeStonesMax;
+    openSetRemaining = openSetMax;
+    isChangingStones = false;
+    selectedForChange = [];
+    gameOver = false;
+    istaka = drawFromPool(istakaSize);
+    renderIstaka();
+    renderBoard();
+    renderTargetScore();
+    renderChangeStonesArea();
+    renderOpenSetArea();
+    document.getElementById('score').innerText = `Puan: ${score}`;
+    showMessage("Taşları sürükleyerek aç, el açınca puan kazanıp yeni taş alırsın.", 1800);
+    setupChangeStonesEvents();
+}
+
 window.onload = function() {
     startGame();
     setupDroppableAreas();

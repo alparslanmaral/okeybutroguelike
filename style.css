@@ -48,7 +48,7 @@ h1 {
 
 #board-area, #istaka-area {
     width: 100%;
-    max-width: 400px;
+    max-width: 100vw;
     margin: 0 auto;
 }
 
@@ -66,16 +66,18 @@ h1 {
 #board, #istaka {
     display: flex;
     flex-direction: row;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: flex-end;
     background: #f3f3fa;
     border-radius: 15px;
     margin-bottom: 16px;
-    padding: 14px 4vw 10px 4vw;
+    padding: 14px 2vw 10px 2vw;
     min-width: 200px;
     min-height: 62px;
     box-shadow: 0 2px 20px #6c63ff18;
     overflow-x: auto;
+    max-width: 100vw;
+    box-sizing: border-box;
 }
 
 #board {
@@ -91,14 +93,14 @@ h1 {
 }
 
 .tile {
-    width: 42px;
-    height: 62px;
-    margin: 0 5px;
+    width: 40px;
+    height: 60px;
+    margin: 0 4px;
     border-radius: 9px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.4rem;
+    font-size: 1.25rem;
     font-weight: 700;
     cursor: grab;
     border: 2.5px solid #dadada;
@@ -140,30 +142,40 @@ h1 {
 #actions-bar {
     width: 100%;
     display: flex;
+    flex-wrap: wrap;
     justify-content: center;
-    gap: 10px;
+    gap: 8px;
     margin: 0 0 10px 0;
+    box-sizing: border-box;
+    flex-shrink: 0;
 }
-
 .btn {
     appearance: none;
     border: none;
     outline: none;
-    padding: 13px 35px;
+    padding: 11px 16px;
     border-radius: 12px;
-    background: linear-gradient(90deg,#6c63ff,#5de0e6);
+    background: #6c63ff;
     color: #fff;
-    font-size: 1.10rem;
+    font-size: 1.08rem;
     font-weight: 600;
     letter-spacing: .4px;
-    box-shadow: 0 2px 8px #6c63ff22;
+    box-shadow: 0 2px 8px #6c63ff16;
     margin: 0;
     transition: background 0.15s, opacity 0.13s;
     cursor: pointer;
-    min-width: 120px;
+    min-width: 110px;
+    flex: 1 1 110px;
+    max-width: 100%;
 }
-.btn:active { background: linear-gradient(90deg,#5de0e6,#6c63ff); }
+.btn:active { background: #4c8ceb; }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn.cancel-btn {
+    background: #f45a5a;
+    color: #fff;
+}
+.btn.cancel-btn:active { background: #b83434; }
 
 #open-set-rights {
     font-size: 1.02rem;
@@ -174,11 +186,13 @@ h1 {
     text-align: center;
 }
 
-#change-stones-count {
+#change-stones-hak {
     font-size: .97rem;
     color: #ff9a3c;
     font-weight: 500;
-    margin-left: 6px;
+    margin-left: 10px;
+    margin-bottom: 8px;
+    display: inline-block;
 }
 
 #message {
@@ -202,7 +216,7 @@ h1 {
 
 #show-pool-btn {
     margin: 12px 0 0 0;
-    background: linear-gradient(90deg,#ffb43c,#f45a5a);
+    background: #ffb43c;
     color: #fff;
     font-weight: 600;
     border: none;
@@ -325,7 +339,7 @@ h1 {
     padding: 12px 28px;
     font-size: 1.13rem;
     font-weight: bold;
-    background: linear-gradient(90deg,#ffb43c,#f45a5a);
+    background: #ffb43c;
     color: #fff;
     border-radius: 10px;
     border: none;
@@ -337,11 +351,26 @@ h1 {
 }
 #restart-btn:active { background: #f45a5a; }
 
-@media (max-width: 600px) {
-    #game-container { padding: 4px 0 18px 0; max-width:97vw; min-height:98vh; }
-    #board, #istaka { min-width: 98vw; max-width:99vw; }
-    .tile { width: 34px; height: 48px; margin: 0 2.5px; font-size: 1.08rem; }
-    #open-set-rights, #score, #target-score { font-size: .98rem; }
-    #message { font-size: 0.97rem; }
-    .btn, #show-pool-btn, #restart-btn { font-size: 1.02rem; min-width: 94px; padding: 11px 8vw; }
+@media (max-width: 700px) {
+    #game-container {
+        padding: 2vw 0 10vw 0;
+        max-width: 99vw;
+        min-height: 98vh;
+    }
+    #board, #istaka {
+        min-width: 99vw;
+        max-width: 99vw;
+        padding-left: 2vw;
+        padding-right: 2vw;
+    }
+    .tile {
+        width: 32px;
+        height: 44px;
+        margin: 0 2px;
+        font-size: 1.01rem;
+    }
+    #open-set-rights, #score, #target-score, #change-stones-hak { font-size: .95rem; }
+    #message { font-size: 0.95rem; }
+    .btn, #show-pool-btn, #restart-btn { font-size: 1.01rem; min-width: 80px; padding: 8px 4vw; }
+    #actions-bar { flex-wrap: wrap; gap: 6px; }
 }
