@@ -2,37 +2,48 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Tek Kişilik Okey Oyunu</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Okey Oyunu</title>
     <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <h1>Tek Kişilik Okey</h1>
-    <div id="target-score"></div>
-    <div id="score">Puan: 0</div>
-    <div id="message" class="hidden"></div>
-    <div id="board-area">
-        <div id="board-label">Açılan Taşlar</div>
-        <div id="board" class="droppable"></div>
-    </div>
-    <button id="open-set-btn">El Aç</button>
-    <div id="istaka-area">
-        <div id="istaka-label">Istaka</div>
-        <div id="istaka" class="droppable"></div>
-    </div>
-    <div id="change-stones-area">
-        <button id="change-stones-btn">
-            Taş Değiştir <span id="change-stones-count"></span>
-        </button>
-        <button id="confirm-change-btn" style="display:none;">Onayla</button>
-    </div>
-    <button id="show-pool-btn">Kalan Taşlar</button>
-    <div id="pool-modal" class="modal">
-      <div class="modal-content">
-        <span id="close-pool-modal" class="close">&times;</span>
-        <h2>Kalan Taşlar</h2>
-        <div id="pool-list"></div>
-      </div>
+    <div id="game-container">
+        <h1>Okey Oyunu</h1>
+        <div id="target-score"></div>
+        <div id="score"></div>
+        <div id="board-area">
+            <div id="board-label">Açık Taşlar</div>
+            <div id="board"></div>
+        </div>
+        <div id="istaka-area">
+            <div id="istaka-label">İstaka</div>
+            <div id="istaka"></div>
+        </div>
+        <div id="actions-bar">
+            <button id="open-set-btn" class="btn">El Aç</button>
+            <button id="change-stones-btn" class="btn">Taş Değiştir</button>
+            <button id="confirm-change-btn" class="btn" style="display:none">Değişimi Onayla</button>
+            <button id="cancel-change-btn" class="btn" style="display:none;background:linear-gradient(90deg,#f45a5a,#ffb43c);color:#fff;">İptal</button>
+        </div>
+        <div id="open-set-rights"></div>
+        <span id="change-stones-count"></span>
+        <button id="show-pool-btn">Kalan Taşlar</button>
+        <div id="message" class="hidden"></div>
+        <div id="pool-modal" class="modal">
+            <div class="modal-content">
+                <span class="close" id="close-pool-modal">&times;</span>
+                <h2>Kalan Taşlar</h2>
+                <div id="pool-list"></div>
+            </div>
+        </div>
+        <div id="gameover-modal">
+            <div id="gameover-content">
+                <h2>Oyunu Kaybettin!</h2>
+                <p>El açma hakkın veya taş değiştirme hakkın bitti ve elde set çıkaramadın.<br><br>Tekrar denemek için tıkla.</p>
+                <button id="restart-btn">Tekrar Dene</button>
+            </div>
+        </div>
     </div>
     <script src="script.js"></script>
 </body>

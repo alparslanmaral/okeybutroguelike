@@ -5,28 +5,33 @@
 // - Kalan taşlar popup'ı ile havuzun güncel durumu gösterilir, kutunun altında "Kalan: n" olarak yazar
 // - 5'li, 4'lü, 3'lü grup setleri de desteklenir, en büyükten küçük sete öncelik verilir
 // - Her taş bir sette yalnızca bir defa kullanılır
+// - Oyuncunun 10 el açma ve 3 taş değiştirme hakkı vardır, haklar bitip set çıkmazsa oyun biter ve tekrar başlatılır
+// - Taş değiştirme modundan iptal ile çıkılabilir
 
 // ------------------------------
 // === AYARLAR ===
 const colors = ['Kırmızı', 'Siyah', 'Yeşil', 'Mavi'];
 const numbers = [1,2,3,4,5,6,7,8,9,10,11,12,13];
 const istakaSize = 7;
-const JOKER = { color: "Joker", number: 0 }; // Joker taş
+const JOKER = { color: "Joker", number: 0 };
 
 const levelTargets = [50, 120, 200, 300, 420, 570, 750, 900, 1200, 2000];
 const levelMax = levelTargets.length;
-const changeStonesMax = 10;
+const changeStonesMax = 3;
+const openSetMax = 10;
 
 // ------------------------------
 // === OYUN DURUMU ===
-let pool = [];      // Havuz (dağıtılmamış taşlar)
+let pool = [];
 let istaka = [];
 let board = [];
 let score = 0;
 let level = 1;
 let changeStonesRemaining = changeStonesMax;
+let openSetRemaining = openSetMax;
 let isChangingStones = false;
 let selectedForChange = [];
+let gameOver = false;
 
 let dragSource = null, dragIndex = null, dragFrom = null;
 let isTouchDragging = false;
@@ -93,64 +98,48 @@ function isConsecutiveSeries(tiles) {
     let missing = expected.filter(x => !realNums.includes(x)).length;
     return missing === jokers;
 }
-
-// 5'li grup set desteği!
 function isSameNumberGroup(tiles) {
-    if (tiles.length < 3 || tiles.length > 5) return false; // 5'li gruplara izin ver
+    if (tiles.length < 3 || tiles.length > 5) return false;
     let realTiles = tiles.filter(t => !isJoker(t));
     const number = realTiles[0]?.number;
     if (!realTiles.every(t => t.number === number)) return false;
     let colorSet = new Set(realTiles.map(t => t.color));
-    // Her renk en fazla 1 kez, toplam taş kadar farklı renk + joker olmalı
     if (colorSet.size + tiles.filter(isJoker).length !== tiles.length) return false;
-    // 4 renk + 1 joker olursa tamam
     return true;
 }
-
-// EN BÜYÜK GRUP SETİ ÖNCELİKLİ, HER TAŞ YALNIZCA BİR SETTE
 function findAllSets(boardTiles) {
     let sets = [];
     let used = Array(boardTiles.length).fill(false);
 
     // --- 1. GRUP SETLER (5-3 taş arası, büyükten küçüğe, aynı sayıdan farklı renk+joker) ---
-    // Her farklı number için, kullanılmayan taşlardan en büyük possible group seti bul:
     let unusedTiles = boardTiles.map((t, i) => ({...t, _idx: i}));
     for (let groupLen = 5; groupLen >= 3; groupLen--) {
-        // Sadece kullanılmayan taşlar!
         let candidates = unusedTiles.filter((t, i) => !used[t._idx] && !isJoker(t));
         let uniqueNumbers = [...new Set(candidates.map(t => t.number))];
         for (let num of uniqueNumbers) {
-            // Bu numaradaki kullanılmayan renkleri ve jokerleri topla
             let groupTiles = [];
             let colorsUsed = new Set();
-            // Renkli taşlar
             for (let t of candidates) {
                 if (t.number === num && !isJoker(t) && !colorsUsed.has(t.color)) {
                     groupTiles.push(t);
                     colorsUsed.add(t.color);
                 }
             }
-            // Jokerleri ekle
             let jokers = unusedTiles.filter(t => !used[t._idx] && isJoker(t));
             for (let j = 0; j < jokers.length && groupTiles.length < groupLen; j++) {
                 groupTiles.push(jokers[j]);
             }
-            // Set uygun uzunlukta ve renkler farklıysa
             if (groupTiles.length === groupLen) {
-                // Seti sırala: renkli->joker
                 groupTiles.sort((a,b) => isJoker(a) - isJoker(b));
-                // Set olarak ekle
                 sets.push({
                     type: 'grup',
                     tiles: groupTiles,
                     indexes: groupTiles.map(t => t._idx)
                 });
-                // Kullanılan taşları işaretle
                 for (let t of groupTiles) used[t._idx] = true;
             }
         }
     }
-
     // --- 2. SERİ SETLER (3+ taş, sıralı, renk aynı, joker destekli) ---
     for (let i = 0; i < boardTiles.length; i++) {
         for (let j = i + 3; j <= boardTiles.length; j++) {
@@ -164,7 +153,6 @@ function findAllSets(boardTiles) {
     }
     return sets;
 }
-
 function getSetPoints(set) {
     return set.tiles.length * 10;
 }
@@ -172,7 +160,7 @@ function getSetPoints(set) {
 // ------------------------------
 // === ARAYÜZ ===
 
-function renderIstaka(){
+function renderIstaka() {
     const istakaDiv = document.getElementById('istaka');
     istakaDiv.innerHTML = '';
     istaka.forEach((tile, idx) => {
@@ -182,14 +170,11 @@ function renderIstaka(){
         el.style.color = tile.color === 'Siyah' ? '#fff' : '#222';
         el.innerText = isJoker(tile) ? "🃏" : tile.number;
         el.title = isJoker(tile) ? "Joker" : tile.color + ' ' + tile.number;
-        el.setAttribute('draggable', String(!isChangingStones));
+        el.setAttribute('draggable', String(!isChangingStones && !gameOver));
 
-        // Taş değiştirme modunda taş seçimi
         if (isChangingStones) {
             el.classList.add('selectable');
-            if (selectedForChange.includes(idx)) {
-                el.classList.add('selected');
-            }
+            if (selectedForChange.includes(idx)) el.classList.add('selected');
             el.onclick = () => {
                 if (selectedForChange.includes(idx)) {
                     selectedForChange = selectedForChange.filter(i => i !== idx);
@@ -202,26 +187,28 @@ function renderIstaka(){
         } else {
             el.onclick = null;
             el.addEventListener('dragstart', (e) => {
-                if (isTouchDragging) return;
+                if (isTouchDragging || gameOver) return;
                 dragSource = tile;
                 dragIndex = idx;
                 dragFrom = 'istaka';
                 setTimeout(() => el.classList.add('dragging'), 0);
             });
             el.addEventListener('dragend', (e) => {
-                if (isTouchDragging) return;
+                if (isTouchDragging || gameOver) return;
                 el.classList.remove('dragging');
                 dragSource = null;
                 dragIndex = null;
                 dragFrom = null;
                 removeAllDragOver();
             });
-            el.addEventListener('touchstart', (e) => handleTouchStart(e, tile, idx, 'istaka'));
+            el.addEventListener('touchstart', (e) => {
+                if (gameOver) return;
+                handleTouchStart(e, tile, idx, 'istaka');
+            });
         }
         istakaDiv.appendChild(el);
     });
 }
-
 function renderBoard(){
     const boardDiv = document.getElementById('board');
     boardDiv.innerHTML = '';
@@ -232,40 +219,42 @@ function renderBoard(){
         el.style.color = tile.color === 'Siyah' ? '#fff' : '#222';
         el.innerText = isJoker(tile) ? "🃏" : tile.number;
         el.title = isJoker(tile) ? "Joker" : tile.color + ' ' + tile.number;
-        el.setAttribute('draggable', 'true');
+        el.setAttribute('draggable', String(!gameOver));
         el.addEventListener('dragstart', (e) => {
-            if (isTouchDragging) return;
+            if (isTouchDragging || gameOver) return;
             dragSource = tile;
             dragIndex = idx;
             dragFrom = 'board';
             setTimeout(() => el.classList.add('dragging'), 0);
         });
         el.addEventListener('dragend', (e) => {
-            if (isTouchDragging) return;
+            if (isTouchDragging || gameOver) return;
             el.classList.remove('dragging');
             dragSource = null;
             dragIndex = null;
             dragFrom = null;
             removeAllDragOver();
         });
-        el.addEventListener('touchstart', (e) => handleTouchStart(e, tile, idx, 'board'));
+        el.addEventListener('touchstart', (e) => {
+            if (gameOver) return;
+            handleTouchStart(e, tile, idx, 'board');
+        });
         boardDiv.appendChild(el);
     });
 }
-
 function setupDroppableAreas() {
     const boardDiv = document.getElementById('board');
     boardDiv.addEventListener('dragover', (e) => {
-        if (isTouchDragging || isChangingStones) return;
+        if (isTouchDragging || isChangingStones || gameOver) return;
         e.preventDefault();
         boardDiv.classList.add('drag-over');
     });
     boardDiv.addEventListener('dragleave', (e) => {
-        if (isTouchDragging || isChangingStones) return;
+        if (isTouchDragging || isChangingStones || gameOver) return;
         boardDiv.classList.remove('drag-over');
     });
     boardDiv.addEventListener('drop', (e) => {
-        if (isTouchDragging || isChangingStones) return;
+        if (isTouchDragging || isChangingStones || gameOver) return;
         e.preventDefault();
         boardDiv.classList.remove('drag-over');
         if (dragSource && dragFrom === 'istaka' && istaka.length >= dragIndex) {
@@ -277,19 +266,18 @@ function setupDroppableAreas() {
             }
         }
     });
-
     const istakaDiv = document.getElementById('istaka');
     istakaDiv.addEventListener('dragover', (e) => {
-        if (isTouchDragging || isChangingStones) return;
+        if (isTouchDragging || isChangingStones || gameOver) return;
         e.preventDefault();
         istakaDiv.classList.add('drag-over');
     });
     istakaDiv.addEventListener('dragleave', (e) => {
-        if (isTouchDragging || isChangingStones) return;
+        if (isTouchDragging || isChangingStones || gameOver) return;
         istakaDiv.classList.remove('drag-over');
     });
     istakaDiv.addEventListener('drop', (e) => {
-        if (isTouchDragging || isChangingStones) return;
+        if (isTouchDragging || isChangingStones || gameOver) return;
         e.preventDefault();
         istakaDiv.classList.remove('drag-over');
         if (dragSource && dragFrom === 'board' && board.length >= dragIndex) {
@@ -319,7 +307,6 @@ function getTouchTargetArea(x, y) {
     }
     return null;
 }
-
 function handleTouchStart(e, tile, idx, from) {
     if (e.touches.length > 1) return;
     isTouchDragging = true;
@@ -338,11 +325,9 @@ function handleTouchStart(e, tile, idx, from) {
     ghost.style.zIndex = '9999';
     ghost.innerText = isJoker(tile) ? "🃏" : tile.number;
     document.body.appendChild(ghost);
-
     document.body.addEventListener('touchmove', handleTouchMove, { passive: false });
     document.body.addEventListener('touchend', handleTouchEnd, { passive: false });
 }
-
 function handleTouchMove(e) {
     if (!ghost || !isTouchDragging) return;
     e.preventDefault();
@@ -355,7 +340,6 @@ function handleTouchMove(e) {
     document.getElementById('istaka').classList.toggle('drag-over', target === 'istaka');
     document.getElementById('board').classList.toggle('drag-over', target === 'board');
 }
-
 function handleTouchEnd(e) {
     if (!ghost || !isTouchDragging) return;
     let x = 0, y = 0;
@@ -367,10 +351,8 @@ function handleTouchEnd(e) {
         y = e.touches[0].clientY;
     }
     const target = getTouchTargetArea(x, y);
-
     document.getElementById('istaka').classList.remove('drag-over');
     document.getElementById('board').classList.remove('drag-over');
-
     if (target && dragSource !== null && dragFrom !== null) {
         if (dragFrom === 'istaka' && target === 'board') {
             if ((board.length + istaka.length) <= istakaSize && istaka.length > 0) {
@@ -408,7 +390,6 @@ function showMessage(msg, timeout = 2200) {
         }, timeout);
     }
 }
-
 function updateScore(points){
     score += points;
     document.getElementById('score').innerText = `Puan: ${score}`;
@@ -429,8 +410,25 @@ function updateScore(points){
         }
     }
 }
-
+function renderOpenSetArea() {
+    const el = document.getElementById('open-set-rights');
+    if (el) {
+        if (openSetRemaining > 1) {
+            el.innerText = `Kalan el açma hakkı: ${openSetRemaining} adet`;
+        } else if (openSetRemaining === 1) {
+            el.innerText = `Kalan el açma hakkı: 1 adet (son hak!)`;
+        } else {
+            el.innerText = `El açma hakkın kalmadı.`;
+        }
+    }
+}
 function handleOpenSet() {
+    if (gameOver) return;
+    if (openSetRemaining <= 0) {
+        showMessage("El açma hakkın bitti!", 1700);
+        checkGameOverAfterRights();
+        return;
+    }
     if (board.length < 3) {
         showMessage("En az 3 taş açmalısın!", 1700);
         return;
@@ -448,55 +446,49 @@ function handleOpenSet() {
     }
     updateScore(totalPoints);
     showMessage(`${sets.length} set açıldı, +${totalPoints} puan!`, 1700);
-
     allIndexes = Array.from(new Set(allIndexes));
     allIndexes.sort((a,b)=>b-a).forEach(idx => board.splice(idx,1));
-
     let toplamTas = istaka.length + board.length;
     let eksik = istakaSize - toplamTas;
     let newTiles = drawFromPool(eksik);
     istaka = istaka.concat(newTiles);
+    openSetRemaining--;
+    renderOpenSetArea();
     renderIstaka();
     renderBoard();
     renderChangeStonesArea();
+    if (openSetRemaining === 0) {
+        checkGameOverAfterRights();
+    }
 }
-
 function renderTargetScore(){
     document.getElementById('target-score').innerText = `Seviye: ${level} / 10 — Hedef Puan: ${levelTargets[level-1]}`;
 }
-
-// === TAŞ DEĞİŞTİRME ALANI ===
-function renderChangeStonesArea() {
-    const countDiv = document.getElementById('change-stones-count');
-    countDiv.innerText = `(${changeStonesRemaining} hak)`;
-    const btn = document.getElementById('change-stones-btn');
-    btn.disabled = changeStonesRemaining === 0 || isChangingStones || pool.length === 0;
-    const confirmBtn = document.getElementById('confirm-change-btn');
-    confirmBtn.style.display = isChangingStones ? 'inline-block' : 'none';
-    confirmBtn.disabled = selectedForChange.length === 0;
+function checkGameOverAfterRights() {
+    let allHand = istaka.slice();
+    if (findAllSets(allHand).length === 0) {
+        showGameOver();
+    }
 }
-
-function startGame(){
-    pool = createPool();
-    istaka = [];
-    board = [];
-    changeStonesRemaining = changeStonesMax;
-    isChangingStones = false;
-    selectedForChange = [];
-    istaka = drawFromPool(istakaSize);
-    renderIstaka();
-    renderBoard();
-    renderTargetScore();
-    renderChangeStonesArea();
-    document.getElementById('score').innerText = `Puan: ${score}`;
-    showMessage("Taşları sürükleyerek aç, el açınca puan kazanıp yeni taş alırsın.", 1800);
-    setupChangeStonesEvents();
+function showGameOver() {
+    gameOver = true;
+    document.getElementById('gameover-modal').style.display = "block";
+    showMessage("Oyunu kaybettin!", 0);
+}
+function hideGameOver() {
+    gameOver = false;
+    document.getElementById('gameover-modal').style.display = "none";
+    level = 1;
+    score = 0;
+    startGame();
 }
 
 // --- Taş değiştirme tuşları eventleri ---
+// Artık bir de İPTAL tuşu var!
 function setupChangeStonesEvents() {
     const changeBtn = document.getElementById('change-stones-btn');
     const confirmBtn = document.getElementById('confirm-change-btn');
+    const cancelBtn = document.getElementById('cancel-change-btn');
 
     let newChangeBtn = changeBtn.cloneNode(true);
     changeBtn.parentNode.replaceChild(newChangeBtn, changeBtn);
@@ -504,8 +496,11 @@ function setupChangeStonesEvents() {
     let newConfirmBtn = confirmBtn.cloneNode(true);
     confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
 
+    let newCancelBtn = cancelBtn.cloneNode(true);
+    cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+
     document.getElementById('change-stones-btn').onclick = () => {
-        if (changeStonesRemaining > 0 && !isChangingStones && pool.length > 0) {
+        if (changeStonesRemaining > 0 && !isChangingStones && pool.length > 0 && !gameOver) {
             isChangingStones = true;
             selectedForChange = [];
             renderIstaka();
@@ -516,7 +511,7 @@ function setupChangeStonesEvents() {
         if (selectedForChange.length === 0) return;
         let newTiles = drawFromPool(selectedForChange.length);
         selectedForChange.forEach((idx, i) => {
-            istaka[idx] = newTiles[i] ?? istaka[idx]; // havuz biterse eski taş kalır
+            istaka[idx] = newTiles[i] ?? istaka[idx];
         });
         changeStonesRemaining--;
         isChangingStones = false;
@@ -524,10 +519,51 @@ function setupChangeStonesEvents() {
         renderIstaka();
         renderChangeStonesArea();
         showMessage("Seçilen taşlar değiştirildi.", 1400);
+        if (changeStonesRemaining === 0) {
+            checkGameOverAfterRights();
+        }
+    };
+
+    document.getElementById('cancel-change-btn').onclick = () => {
+        isChangingStones = false;
+        selectedForChange = [];
+        renderIstaka();
+        renderChangeStonesArea();
+        showMessage("Taş değiştirme iptal edildi.", 1200);
     };
 }
 
-// === HAVUZ MODALI ===
+function renderChangeStonesArea() {
+    const countDiv = document.getElementById('change-stones-count');
+    countDiv.innerText = `(${changeStonesRemaining} hak)`;
+    const btn = document.getElementById('change-stones-btn');
+    btn.disabled = changeStonesRemaining === 0 || isChangingStones || pool.length === 0 || gameOver;
+    const confirmBtn = document.getElementById('confirm-change-btn');
+    const cancelBtn = document.getElementById('cancel-change-btn');
+    confirmBtn.style.display = isChangingStones ? 'inline-block' : 'none';
+    confirmBtn.disabled = selectedForChange.length === 0;
+    cancelBtn.style.display = isChangingStones ? 'inline-block' : 'none';
+}
+
+function startGame(){
+    pool = createPool();
+    istaka = [];
+    board = [];
+    changeStonesRemaining = changeStonesMax;
+    openSetRemaining = openSetMax;
+    isChangingStones = false;
+    selectedForChange = [];
+    gameOver = false;
+    istaka = drawFromPool(istakaSize);
+    renderIstaka();
+    renderBoard();
+    renderTargetScore();
+    renderChangeStonesArea();
+    renderOpenSetArea();
+    document.getElementById('score').innerText = `Puan: ${score}`;
+    showMessage("Taşları sürükleyerek aç, el açınca puan kazanıp yeni taş alırsın.", 1800);
+    setupChangeStonesEvents();
+}
 function renderPoolModal() {
     const poolListDiv = document.getElementById('pool-list');
     let counts = {};
@@ -573,11 +609,10 @@ function setupPoolModalEvents() {
         if (evt.target === modal) modal.style.display = "none";
     });
 }
-
-// === BAŞLAT ===
 window.onload = function() {
     startGame();
     setupDroppableAreas();
     document.getElementById('open-set-btn').onclick = handleOpenSet;
     setupPoolModalEvents();
+    document.getElementById('restart-btn').onclick = hideGameOver;
 };

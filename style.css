@@ -1,226 +1,220 @@
 body {
-    font-family: 'Segoe UI', Arial, sans-serif;
-    background: #f2f2f2;
+    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+    background: #f6f7fa;
     margin: 0;
     padding: 0;
-    text-align: center;
     min-height: 100vh;
+    color: #222;
     display: flex;
     flex-direction: column;
+    align-items: center;
 }
 
 h1 {
-    margin-bottom: 8px;
-    font-size: 2rem;
+    margin: 16px 0 8px 0;
+    font-size: 1.5rem;
+    font-weight: 700;
     letter-spacing: 1px;
+    color: #263159;
 }
 
-#target-score {
-    font-size: 1.2rem;
-    margin: 4px 0;
-    color: #8e44ad;
+#game-container {
+    width: 100vw;
+    max-width: 440px;
+    margin: 0 auto 0 auto;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 8px 32px #3332;
+    padding: 12px 8px 32px 8px;
+    min-height: 97vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#target-score, #score {
+    font-size: 1.08rem;
+    color: #6c63ff;
+    margin: 6px 0 0 0;
+    font-weight: 500;
+    letter-spacing: .1px;
 }
 
 #score {
-    margin-bottom: 8px;
-    font-size: 1rem;
+    color: #222;
+    font-size: 1.04rem;
+    margin: 3px 0 14px 0;
 }
-
-#message {
-    margin: 10px auto 12px auto;
-    padding: 8px 12px;
-    min-width: 160px;
-    max-width: 90vw;
-    background: #f8c471;
-    color: #633c14;
-    border-radius: 8px;
-    font-weight: bold;
-    font-size: 1rem;
-    display: none;
-    transition: all 0.3s;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-    z-index: 50;
-}
-#message.visible { display: block; }
-#message.hidden { display: none; }
 
 #board-area, #istaka-area {
-    width: 100vw;
-    max-width: 480px;
+    width: 100%;
+    max-width: 400px;
     margin: 0 auto;
 }
 
 #board-label, #istaka-label {
     font-weight: 600;
-    color: #2471a3;
-    margin-bottom: 6px;
-    letter-spacing: .5px;
-    font-size: 1.1rem;
+    color: #6c63ff;
+    margin: 0 0 5px 0;
+    font-size: .98rem;
 }
 
 #istaka-label {
-    color: #b9770e;
-    margin-bottom: 5px;
+    color: #ff9a3c;
+}
+
+#board, #istaka {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: flex-end;
+    background: #f3f3fa;
+    border-radius: 15px;
+    margin-bottom: 16px;
+    padding: 14px 4vw 10px 4vw;
+    min-width: 200px;
+    min-height: 62px;
+    box-shadow: 0 2px 20px #6c63ff18;
+    overflow-x: auto;
 }
 
 #board {
-    min-height: 90px;
-    min-width: 240px;
-    border-radius: 13px;
-    background: #eaf2f8;
-    box-shadow: 0 4px 14px rgba(52, 152, 219, 0.13);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 8px 3vw;
-    margin: 0 auto 18px auto;
-    transition: border 0.2s;
-    border: 2px dashed transparent;
+    margin-top: 10px;
+    background: #e9eefd;
 }
 
 #istaka {
-    display: flex;
-    justify-content: center;
-    align-items: flex-end;
-    background: #f7dc6f;
-    border: 3px solid #b9770e;
-    border-radius: 18px 18px 32px 32px;
-    padding: 16px 3vw 28px 3vw;
-    min-width: 240px;
-    min-height: 92px;
-    margin: 0 auto 18px auto;
-    box-shadow: 0 6px 24px rgba(241, 196, 15, 0.13);
-    position: relative;
-    overflow-x: auto;
-    transition: border 0.2s;
-    border: 3px solid #b9770e;
+    background: #fff5e4;
+    border: 2.5px solid #ff9a3c33;
+    margin-bottom: 28px;
+    min-height: 76px;
 }
 
 .tile {
-    width: 48px;
-    height: 68px;
-    margin: 0 7px;
-    border-radius: 10px;
+    width: 42px;
+    height: 62px;
+    margin: 0 5px;
+    border-radius: 9px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
-    font-weight: bold;
+    font-size: 1.4rem;
+    font-weight: 700;
     cursor: grab;
-    border: 2px solid #7f8c8d;
+    border: 2.5px solid #dadada;
+    background: #fff;
     user-select: none;
-    box-sizing: border-box;
+    box-shadow: 0 2px 6px #aaa1;
     transition: border 0.18s, background 0.22s, transform 0.09s;
-    box-shadow: 0 2px 8px #aaa2;
     position: relative;
 }
 
 .tile:active {
-    transform: scale(0.96);
+    transform: scale(0.97);
     cursor: grabbing;
 }
-
 .tile.dragging {
-    opacity: 0.65;
-    z-index: 100;
+    opacity: 0.67;
+    z-index: 50;
 }
-
-.tile.board {
-    border: 2px solid #2980b9;
-    cursor: grab;
-}
-
-.tile.istaka {
-    background: #f9e79f;
-}
-
+.tile.board { border: 2.5px solid #6c63ff55; }
+.tile.istaka { background: #fff5e4; border: 2.5px solid #ff9a3c44; }
 .tile.ghost-drag {
     pointer-events: none;
     opacity: 0.9;
-    box-shadow: 0 4px 20px #3338;
-    border: 2px solid #aaa;
+    box-shadow: 0 4px 20px #3337;
+    border: 2.5px solid #aaa;
+}
+.tile.istaka.selectable { cursor: pointer; box-shadow: 0 0 0 2.5px #6c63ff66; }
+.tile.istaka.selected {
+    border: 2.5px solid #ff9a3c;
+    box-shadow: 0 0 0 4px #ff9a3c22;
 }
 
-.droppable.drag-over {
-    border: 2px solid #27ae60 !important;
+.tile.kırmızı { background: #f45a5a; color: #fff; }
+.tile.siyah   { background: #222b45; color: #fff; }
+.tile.yeşil   { background: #20b56c; color: #fff; }
+.tile.mavi    { background: #4c8ceb; color: #fff; }
+.tile.joker   { background: #ffb43c; color: #fff; font-size: 1.5rem; }
+
+#actions-bar {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 0 0 10px 0;
 }
 
-#open-set-btn {
-    display: block;
-    margin: 12px auto 24px auto;
-    padding: 12px 40px;
-    background: #27ae60;
-    color: #fff;
+.btn {
+    appearance: none;
     border: none;
-    border-radius: 13px;
-    font-size: 1.35rem;
-    font-weight: bold;
-    letter-spacing: 1px;
+    outline: none;
+    padding: 13px 35px;
+    border-radius: 12px;
+    background: linear-gradient(90deg,#6c63ff,#5de0e6);
+    color: #fff;
+    font-size: 1.10rem;
+    font-weight: 600;
+    letter-spacing: .4px;
+    box-shadow: 0 2px 8px #6c63ff22;
+    margin: 0;
+    transition: background 0.15s, opacity 0.13s;
     cursor: pointer;
-    box-shadow: 0 2px 8px #27ae6036;
-    transition: background 0.18s;
+    min-width: 120px;
 }
-#open-set-btn:active { background: #229954; }
+.btn:active { background: linear-gradient(90deg,#5de0e6,#6c63ff); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-#change-stones-area {
-    margin-bottom: 12px;
+#open-set-rights {
+    font-size: 1.02rem;
+    color: #263159;
+    margin: 9px 0 8px 0;
+    font-weight: 500;
+    letter-spacing: 0.1px;
+    text-align: center;
 }
 
-#change-stones-btn {
-    padding: 10px 25px;
-    font-size: 1.07rem;
-    font-weight: bold;
-    background: #2980b9;
+#change-stones-count {
+    font-size: .97rem;
+    color: #ff9a3c;
+    font-weight: 500;
+    margin-left: 6px;
+}
+
+#message {
+    margin: 10px auto 12px auto;
+    padding: 9px 15px;
+    min-width: 170px;
+    max-width: 96vw;
+    background: #6c63ff;
     color: #fff;
     border-radius: 9px;
-    border: none;
-    cursor: pointer;
-    transition: background 0.18s;
-    margin-top: 2px;
-    margin-bottom: 8px;
+    font-weight: 600;
+    font-size: 1.04rem;
+    display: none;
+    transition: all 0.3s;
+    box-shadow: 0 2px 8px #6c63ff20;
+    z-index: 50;
+    text-align: center;
 }
-#change-stones-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-#confirm-change-btn {
-    margin-left: 10px;
-    background: #e67e22;
+#message.visible { display: block; }
+#message.hidden { display: none; }
+
+#show-pool-btn {
+    margin: 12px 0 0 0;
+    background: linear-gradient(90deg,#ffb43c,#f45a5a);
     color: #fff;
+    font-weight: 600;
     border: none;
     border-radius: 9px;
     padding: 10px 24px;
-    font-size: 1rem;
-    font-weight: bold;
+    font-size: 1.05rem;
+    box-shadow: 0 2px 8px #ffb43c33;
     cursor: pointer;
+    transition: background 0.14s;
+    min-width: 120px;
 }
-#confirm-change-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.tile.istaka.selectable {
-    cursor: pointer;
-    box-shadow: 0 0 0 3px #2980b988;
-}
-.tile.istaka.selected {
-    border: 3px solid #e67e22;
-    box-shadow: 0 0 0 4px #e67e2288;
-}
-
-#show-pool-btn {
-    padding: 10px 25px;
-    font-size: 1.07rem;
-    font-weight: bold;
-    background: #34495e;
-    color: #fff;
-    border-radius: 9px;
-    border: none;
-    cursor: pointer;
-    margin: 12px auto 16px auto;
-    display: block;
-}
-#show-pool-btn:active { background: #232d36; }
+#show-pool-btn:active { background: #f45a5a; }
 
 .modal {
     display: none;
@@ -228,17 +222,17 @@ h1 {
     z-index: 199;
     left: 0; top: 0; width: 100vw; height: 100vh;
     overflow: auto;
-    background: rgba(0,0,0,0.34);
+    background: rgba(0,0,0,0.22);
 }
 .modal-content {
-    background: #f2f2f2;
-    margin: 5% auto;
+    background: #fff;
+    margin: 8% auto;
     padding: 26px 16px 24px 16px;
-    border-radius: 17px;
+    border-radius: 16px;
     width: 95vw;
-    max-width: 430px;
+    max-width: 410px;
     min-height: 120px;
-    box-shadow: 0 6px 44px #2223;
+    box-shadow: 0 6px 44px #2222;
     position: relative;
     text-align: left;
 }
@@ -283,56 +277,71 @@ h1 {
     box-shadow: 0 2px 4px #9992;
     position: relative;
 }
-.pool-tile.kırmızı { background: #e74c3c; color: #fff; }
-.pool-tile.siyah   { background: #2d3436; color: #fff; }
-.pool-tile.yeşil   { background: #27ae60; color: #fff; }
-.pool-tile.mavi    { background: #2980b9; color: #fff; }
-.pool-tile.joker   { background: #e67e22; color: #fff; font-size: 1.3rem; }
+.pool-tile.kırmızı { background: #f45a5a; color: #fff; }
+.pool-tile.siyah   { background: #222b45; color: #fff; }
+.pool-tile.yeşil   { background: #20b56c; color: #fff; }
+.pool-tile.mavi    { background: #4c8ceb; color: #fff; }
+.pool-tile.joker   { background: #ffb43c; color: #fff; font-size: 1.3rem; }
 .close {
     position: absolute;
     right: 14px; top: 12px;
     font-size: 2.1rem;
     font-weight: bold;
-    color: #a93226;
+    color: #f45a5a;
     cursor: pointer;
     transition: color 0.2s;
 }
 .close:hover { color: #922b21; }
 
-/* Mobil görünüm için */
-@media (max-width: 600px) {
-    h1 { font-size: 1.3rem; }
-    #target-score, #score { font-size: .97rem; }
-    #board, #istaka {
-        min-width: 96vw;
-        padding-left: 0;
-        padding-right: 0;
-    }
-    .tile {
-        width: 38px;
-        height: 54px;
-        margin: 0 4px;
-        font-size: 1.1rem;
-    }
-    #message {
-        font-size: 0.95rem;
-        padding: 7px 7px;
-    }
-    #istaka, #board {
-        max-width: 97vw;
-        overflow-x: auto;
-    }
-    #open-set-btn, #change-stones-btn, #confirm-change-btn, #show-pool-btn { font-size: 1rem; padding: 9px 6vw; }
+#gameover-modal {
+    display: none;
+    position: fixed;
+    z-index: 500;
+    left: 0; top: 0; width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.24);
 }
+#gameover-content {
+    background: #fff;
+    border-radius: 15px;
+    box-shadow: 0 4px 40px #0004;
+    width: 88vw;
+    max-width: 390px;
+    margin: 12vh auto;
+    padding: 30px 20px 32px 20px;
+    text-align: center;
+    position: relative;
+}
+#gameover-content h2 {
+    color: #f45a5a;
+    margin-bottom: 16px;
+    font-size: 1.38rem;
+}
+#gameover-content p {
+    color: #222;
+    margin-bottom: 17px;
+    font-size: 1.08rem;
+}
+#restart-btn {
+    padding: 12px 28px;
+    font-size: 1.13rem;
+    font-weight: bold;
+    background: linear-gradient(90deg,#ffb43c,#f45a5a);
+    color: #fff;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    margin-top: 5px;
+    margin-bottom: 8px;
+    box-shadow: 0 2px 10px #f45a5a23;
+    min-width: 120px;
+}
+#restart-btn:active { background: #f45a5a; }
 
-/* Dikey ekran için */
-@media (orientation: portrait) {
-    body {
-        flex-direction: column;
-        justify-content: flex-start;
-        height: 100vh;
-    }
-    #board-area, #istaka-area {
-        max-width: 99vw;
-    }
+@media (max-width: 600px) {
+    #game-container { padding: 4px 0 18px 0; max-width:97vw; min-height:98vh; }
+    #board, #istaka { min-width: 98vw; max-width:99vw; }
+    .tile { width: 34px; height: 48px; margin: 0 2.5px; font-size: 1.08rem; }
+    #open-set-rights, #score, #target-score { font-size: .98rem; }
+    #message { font-size: 0.97rem; }
+    .btn, #show-pool-btn, #restart-btn { font-size: 1.02rem; min-width: 94px; padding: 11px 8vw; }
 }
