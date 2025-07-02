@@ -17,7 +17,7 @@ const numbers = [1,2,3,4,5,6,7,8,9,10,11,12,13];
 const istakaSize = 7;
 const JOKER = { color: "Joker", number: 0 };
 
-const levelTargets = [50, 120, 200, 300, 420, 570, 750, 900, 1200, 2000];
+const levelTargets = [50, 120, 200, 300, 410, 570, 750, 900, 1200, 2000];
 const levelMax = levelTargets.length;
 const changeStonesMax = 10;
 const openSetMax = 5;
