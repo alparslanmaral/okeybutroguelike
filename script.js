@@ -19,8 +19,8 @@ const JOKER = { color: "Joker", number: 0 };
 
 const levelTargets = [50, 120, 200, 300, 420, 570, 750, 900, 1200, 2000];
 const levelMax = levelTargets.length;
-const changeStonesMax = 3;
-const openSetMax = 10;
+const changeStonesMax = 10;
+const openSetMax = 5;
 
 // ------------------------------
 // === OYUN DURUMU ===
