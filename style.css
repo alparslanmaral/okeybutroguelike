@@ -129,7 +129,7 @@ h1 {
 }
 .tile.istaka.selectable { cursor: pointer; box-shadow: 0 0 0 2.5px #6c63ff66; }
 .tile.istaka.selected {
-    border: 2.5px solid #ff9a3c;
+    border: 3.5px solid #ff2600;
     box-shadow: 0 0 0 4px #ff9a3c22;
 }
 
