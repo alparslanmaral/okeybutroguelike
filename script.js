@@ -1,17 +1,5 @@
-// === OKEY OYUNU TAM SÜRÜM ===
-// - Okey havuzu (106 taş: 4x(1-13)x2 + 2 joker)
-// - Her seviye başında havuz sıfırlanır, taşlar havuzdan çekilir
-// - Taş değiştirme havuzdan eksiltir, havuzdan çıkan taşlar geri gelmez (level bitene kadar)
-// - Kalan taşlar popup'ı ile havuzun güncel durumu gösterilir, kutunun altında "Kalan: n" olarak yazar
-// - 5'li, 4'lü, 3'lü grup setleri de desteklenir, en büyükten küçük sete öncelik verilir
-// - Her taş bir sette yalnızca bir defa kullanılır
-// - Oyuncunun 10 el açma ve 3 taş değiştirme hakkı vardır, haklar bitip set çıkmazsa oyun biter ve tekrar başlatılır
-// - Taş değiştirme modundan iptal ile çıkılabilir
-// - Kalan taş değiştirme hakkı ve kalan el açma hakkı, ilgili butonların yanında ve altında görünür
-// - Mobil ve masaüstü uyumlu, responsive arayüz (taşmayan tuşlar ve alanlar)
+// === OKEY OYUNU TAM SÜRÜM (DÜZELTİLMİŞ WRAP-AROUND SERİ SET DESTEĞİ İLE) ===
 
-// ------------------------------
-// === AYARLAR ===
 const colors = ['Kırmızı', 'Siyah', 'Yeşil', 'Mavi'];
 const numbers = [1,2,3,4,5,6,7,8,9,10,11,12,13];
 const istakaSize = 7;
@@ -22,8 +10,6 @@ const levelMax = levelTargets.length;
 const changeStonesMax = 10;
 const openSetMax = 5;
 
-// ------------------------------
-// === OYUN DURUMU ===
 let pool = [];
 let istaka = [];
 let board = [];
@@ -49,9 +35,10 @@ function createPool() {
             arr.push({ color: c, number: n });
         }
     }
-    arr.push({ ...JOKER });
-    arr.push({ ...JOKER });
-    // Karıştır:
+    let jokerCount = 2;
+    if (ownedMarketItems.includes("joker_upgrade")) jokerCount = 4;
+    if (ownedMarketItems.includes("black_knight")) jokerCount = 0;
+    for(let i=0; i<jokerCount; i++) arr.push({ ...JOKER });
     for (let i = arr.length - 1; i > 0; i--) {
         let j = Math.floor(Math.random() * (i + 1));
         [arr[i], arr[j]] = [arr[j], arr[i]];
@@ -78,7 +65,8 @@ const colorCodes = {
 };
 
 // ------------------------------
-// === KURALLAR (Joker Destekli) ===
+// === KURALLAR (Joker Destekli ve WRAP-AROUND Serili) ===
+
 function isConsecutiveSeries(tiles) {
     if (tiles.length < 3) return false;
     const color = tiles.find(t => !isJoker(t))?.color;
@@ -87,19 +75,21 @@ function isConsecutiveSeries(tiles) {
 
     let nums = tiles.map(t => isJoker(t) ? null : t.number);
     let jokers = nums.filter(x => x === null).length;
-    let realNums = nums.filter(x => x !== null);
-    realNums.sort((a, b) => a - b);
+    let realNums = [...new Set(nums.filter(x => x !== null))];
+    if (realNums.length === 0) return false;
 
-    let min = realNums[0];
-    let expected = [];
-    for (let i = 0; i < tiles.length; i++) {
-        let val = min + i;
-        if (val > 13) val = val - 13;
-        expected.push(val);
+    // Tüm wrap-around serileri dene
+    for (let start = 1; start <= 13; start++) {
+        let seq = [];
+        for (let i = 0; i < tiles.length; i++) {
+            seq.push(((start + i - 1) % 13) + 1);
+        }
+        let missing = seq.filter(n => !realNums.includes(n)).length;
+        if (missing === jokers) return true;
     }
-    let missing = expected.filter(x => !realNums.includes(x)).length;
-    return missing === jokers;
+    return false;
 }
+
 function isSameNumberGroup(tiles) {
     if (tiles.length < 3 || tiles.length > 5) return false;
     let realTiles = tiles.filter(t => !isJoker(t));
@@ -109,11 +99,65 @@ function isSameNumberGroup(tiles) {
     if (colorSet.size + tiles.filter(isJoker).length !== tiles.length) return false;
     return true;
 }
+
+// --- WRAP-AROUND destekli tüm serileri bulma fonksiyonu ---
+function findAllSeriesSets(tiles, usedArr) {
+    let sets = [];
+    for (let color of colors) {
+        // O renkten ve jokerden taşları çek
+        let colorTiles = tiles.map((t, i) => ({...t, _idx: i})).filter((t, i) => (t.color === color || isJoker(t)) && !usedArr[t._idx]);
+        if (colorTiles.length < 3) continue;
+        let numbers = colorTiles.filter(t => !isJoker(t));
+        let jokers = colorTiles.filter(t => isJoker(t));
+        let uniqNumbers = [...new Set(numbers.map(t => t.number))];
+        if (uniqNumbers.length === 0) continue;
+
+        for (let len = colorTiles.length; len >= 3; len--) {
+            for (let start = 1; start <= 13; start++) {
+                let seq = [];
+                for (let i = 0; i < len; i++) {
+                    seq.push(((start + i - 1) % 13) + 1);
+                }
+                let missing = seq.filter(n => !uniqNumbers.includes(n)).length;
+                if (missing <= jokers.length) {
+                    // Seti oluştur
+                    let foundTiles = [];
+                    let usedIdxs = [];
+                    let jokerUsed = 0;
+                    for (let n of seq) {
+                        let idx = numbers.findIndex(t => t.number === n && !usedIdxs.includes(t._idx));
+                        if (idx !== -1) {
+                            foundTiles.push(numbers[idx]);
+                            usedIdxs.push(numbers[idx]._idx);
+                        } else if (jokerUsed < jokers.length) {
+                            foundTiles.push(jokers[jokerUsed]);
+                            jokerUsed++;
+                        }
+                    }
+                    // Aynı seti tekrar ekleme
+                    let setAlreadyExists = sets.some(s =>
+                        s.tiles.length === foundTiles.length &&
+                        s.tiles.every((t, i) => t._idx === foundTiles[i]._idx)
+                    );
+                    if (foundTiles.length === len && !setAlreadyExists) {
+                        sets.push({
+                            type: 'seri',
+                            tiles: foundTiles,
+                            indexes: foundTiles.map(t => t._idx)
+                        });
+                    }
+                }
+            }
+        }
+    }
+    return sets;
+}
+
 function findAllSets(boardTiles) {
     let sets = [];
     let used = Array(boardTiles.length).fill(false);
 
-    // --- 1. GRUP SETLER (5-3 taş arası, büyükten küçüğe, aynı sayıdan farklı renk+joker) ---
+    // --- 1. GRUP SETLER ---
     let unusedTiles = boardTiles.map((t, i) => ({...t, _idx: i}));
     for (let groupLen = 5; groupLen >= 3; groupLen--) {
         let candidates = unusedTiles.filter((t, i) => !used[t._idx] && !isJoker(t));
@@ -142,16 +186,15 @@ function findAllSets(boardTiles) {
             }
         }
     }
-    // --- 2. SERİ SETLER (3+ taş, sıralı, renk aynı, joker destekli) ---
-    for (let i = 0; i < boardTiles.length; i++) {
-        for (let j = i + 3; j <= boardTiles.length; j++) {
-            if (used.slice(i, j).some(u => u)) continue;
-            let slice = boardTiles.slice(i, j);
-            if (isConsecutiveSeries(slice)) {
-                sets.push({ type: 'seri', tiles: slice, indexes: Array.from({length: slice.length}, (_, k) => i + k) });
-                for (let k = i; k < j; k++) used[k] = true;
-            }
-        }
+    // --- 2. SERİ SETLER (3+ taş, sıralı/wrap, renk aynı, joker destekli) ---
+    let seriSets = findAllSeriesSets(boardTiles, used);
+    for (let s of seriSets) {
+        sets.push({
+            type: s.type,
+            tiles: s.tiles,
+            indexes: s.indexes
+        });
+        for (let idx of s.indexes) used[idx] = true;
     }
     return sets;
 }
