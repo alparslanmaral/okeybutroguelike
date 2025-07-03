@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Okey Oyunu</title>
+    <title>Okey Oyunu - Marketli & Çipli</title>
     <link rel="stylesheet" href="style.css">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -10,6 +10,8 @@
 <body>
     <div id="game-container">
         <h1>Okey Oyunu</h1>
+        <!-- Çip göstergesi (MARKET/ÇİP SİSTEMİ EKLEMESİ) -->
+        <div id="chip-count"></div>
         <div id="target-score"></div>
         <div id="score"></div>
         <div id="board-area">
@@ -39,10 +41,27 @@
                 <div id="pool-list"></div>
             </div>
         </div>
+        <button id="show-upgrades-btn">Aktif Yükseltmeler</button>
+        <div id="message" class="hidden"></div>
+        <div id="upgrades-modal" class="modal">
+            <div class="modal-content">
+                <span class="close" id="close-upgrades-modal">&times;</span>
+                <h2>Aktif Yükseltmeler</h2>
+                <div id="active-upgrades-list"></div>
+            </div>
+        </div>
+        <!-- MARKET MODALI (MARKET/ÇİP SİSTEMİ EKLEMESİ) -->
+        <div id="market-modal" class="modal">
+            <div class="market-modal-content">
+                <h2>Market</h2>
+                <div id="market-items"></div>
+                <button id="market-close-btn" class="btn market-close-btn">Sonraki Seviyeye Geç</button>
+            </div>
+        </div>
         <div id="gameover-modal">
             <div id="gameover-content">
                 <h2>Oyunu Kaybettin!</h2>
-                <p>El açma hakkın veya taş değiştirme hakkın bitti ve elde set çıkaramadın.<br><br>Tekrar denemek için tıkla.</p>
+                <p>El açma veya taş değiştirme hakkın bitti, set çıkaramadın veya çiplerin ve market ürünlerin sıfırlandı.<br><br>Tekrar denemek için tıkla.</p>
                 <button id="restart-btn">Tekrar Dene</button>
             </div>
         </div>

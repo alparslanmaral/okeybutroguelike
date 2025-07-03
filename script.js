@@ -624,3 +624,310 @@ window.onload = function() {
     setupPoolModalEvents();
     document.getElementById('restart-btn').onclick = hideGameOver;
 };
+
+// CHIP/MARKET DEĞİŞKENLERİ
+let userChips = 0; // Çip bakiyesi
+let ownedMarketItems = []; // Alınan market ürünleri (key listesi)
+let marketOpen = false;
+let nextMarketItems = [];
+const ALL_MARKET_ITEMS = [
+    { key: "red_boost", name: "Kırmızı Yükseltmesi", price: 15, desc: "Kırmızı taşlar kullanılarak açılan ellerde kullanılan kırmızı taş başına 20 puan kazanılır." },
+    { key: "black_boost", name: "Siyah Yükseltmesi", price: 15, desc: "Siyah taşlar kullanılarak açılan ellerde kullanılan siyah taş başına 20 puan kazanılır." },
+    { key: "green_boost", name: "Yeşil Yükseltmesi", price: 15, desc: "Yeşil taşlar kullanılarak açılan ellerde kullanılan yeşil taş başına 20 puan kazanılır." },
+    { key: "blue_boost", name: "Mavi Yükseltmesi", price: 15, desc: "Mavi taşlar kullanılarak açılan ellerde kullanılan mavi taş başına 20 puan kazanılır." },
+    { key: "red_set", name: "Kırmızı Set", price: 10, desc: "Sadece kırmızı taşlar kullanılarak açılan ellerde ekstra 70 puan kazanılır." },
+    { key: "black_set", name: "Siyah Set", price: 10, desc: "Sadece siyah taşlar kullanılarak açılan ellerde ekstra 70 puan kazanılır." },
+    { key: "green_set", name: "Yeşil Set", price: 10, desc: "Sadece yeşil taşlar kullanılarak açılan ellerde ekstra 70 puan kazanılır." },
+    { key: "blue_set", name: "Mavi Set", price: 10, desc: "Sadece mavi taşlar kullanılarak açılan ellerde ekstra 70 puan kazanılır." },
+    { key: "three_power", name: "Üçlü Olsun, Güçlü Olsun", price: 6, desc: "3 sayısındaki taşlar kullanılarak açılan ellerde kullanılan 3 sayılı taş başına 20 puan kazanılır." },
+    { key: "five_power", name: "Beşi Bir Arada", price: 6, desc: "5 sayısındaki taşlar kullanılarak açılan ellerde kullanılan 5 sayılı taş başına 20 puan kazanılır." },
+    { key: "joker_upgrade", name: "Joker Yükseltmesi", price: 20, desc: "Havuzdaki Joker sayısı 4'e çıkar." },
+    { key: "seven_legend", name: "Birimiz Hepimiz, Hepimiz Birimiz", price: 10, desc: "7 taşlık bir el açtığında ekstra 1000 puan kazanılır." },
+    { key: "joker_dream", name: "Joker'in Rüyası", price: 8, desc: "En az 2 Joker kullanılarak açılan ellerde ekstra 50 puan kazanılır." },
+    { key: "last_chance", name: "Günü Kurtar", price: 10, desc: "Hiç taş değiştirme hakkı yokken el açılırsa ekstra 50 puan kazanılır." },
+    { key: "black_knight", name: "Kara Şövalye Yükseliyor", price: 5, desc: "Havuzdaki Joker sayısı 0 olur ama açılan her elde ekstra 20 puan kazanılır." }
+];
+
+// Çip gösterimi
+function renderChips() {
+    if (document.getElementById('chip-count'))
+        document.getElementById('chip-count').innerHTML = `Çip: ${userChips} <span class="chip-emoji">🟡</span>`;
+}
+
+// Market ürünleri arayüzü
+function renderMarket() {
+    const marketDiv = document.getElementById('market-items');
+    marketDiv.innerHTML = "";
+    nextMarketItems.forEach(key => {
+        const item = ALL_MARKET_ITEMS.find(i => i.key === key);
+        if (!item) return; // <-- HATALI KEY VARSA ATLAR
+        const owned = ownedMarketItems.includes(key);
+        const itemDiv = document.createElement('div');
+        itemDiv.className = "market-item" + (owned ? " owned" : "");
+        itemDiv.innerHTML = `
+            <div class="market-item-title">${item.name}</div>
+            <div class="market-item-desc">${item.desc}</div>
+            <div class="market-item-buy">
+                <span class="market-price">${item.price} <span class="chip-emoji">🟡</span></span>
+                <button class="btn buy-btn" ${owned ? "disabled" : ""} data-key="${key}">
+                    ${owned ? "Satın Alındı" : "Satın Al"}
+                </button>
+            </div>
+        `;
+        marketDiv.appendChild(itemDiv);
+    });
+    marketDiv.querySelectorAll(".buy-btn").forEach(btn => {
+        btn.onclick = () => {
+            buyMarketItem(btn.getAttribute("data-key"));
+        };
+    });
+    renderChips();
+}
+function getRandomMarketItems() {
+    const available = ALL_MARKET_ITEMS.filter(item =>
+        !ownedMarketItems.includes(item.key)
+    );
+    let shuffled = available.slice();
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled.slice(0, 3).map(item => item.key); // SADECE KEY'ler döner
+}
+function openMarket() {
+    marketOpen = true;
+    nextMarketItems = getRandomMarketItems();
+    renderMarket();
+    document.getElementById('market-modal').style.display = "block";
+}
+function closeMarket() {
+    marketOpen = false;
+    nextMarketItems = [];
+    document.getElementById('market-modal').style.display = "none";
+    level++;
+    score = 0;
+    startGame();
+}
+function buyMarketItem(key) {
+    const item = ALL_MARKET_ITEMS.find(i => i.key === key);
+    if (!item) return;
+    if (userChips < item.price) {
+        showMessage("Yeterli çipin yok!", 1600);
+        return;
+    }
+    userChips -= item.price;
+    ownedMarketItems.push(item.key);
+    renderMarket();
+    renderChips();
+}
+function resetGameProgress() {
+    userChips = 0;
+    ownedMarketItems = [];
+    renderChips();
+}
+
+// Market bonus puan hesaplama
+function calcSetBonusPoints(boardSnapshot) {
+    let totalBonus = 0;
+    let items = ownedMarketItems;
+    let colorCount = { "Kırmızı": 0, "Siyah": 0, "Yeşil": 0, "Mavi": 0 };
+    let numberCount = {};
+    let jokerCount = 0;
+    for (const t of boardSnapshot) {
+        if (isJoker(t)) jokerCount++;
+        else {
+            colorCount[t.color] = (colorCount[t.color]||0) + 1;
+            numberCount[t.number] = (numberCount[t.number]||0) + 1;
+        }
+    }
+    if (items.includes("red_boost")) totalBonus += 20 * (colorCount["Kırmızı"]||0);
+    if (items.includes("black_boost")) totalBonus += 20 * (colorCount["Siyah"]||0);
+    if (items.includes("green_boost")) totalBonus += 20 * (colorCount["Yeşil"]||0);
+    if (items.includes("blue_boost")) totalBonus += 20 * (colorCount["Mavi"]||0);
+
+    const allSameColor = (col) => boardSnapshot.every(t => isJoker(t) || t.color === col);
+    if (items.includes("red_set") && allSameColor("Kırmızı")) totalBonus += 70;
+    if (items.includes("black_set") && allSameColor("Siyah")) totalBonus += 70;
+    if (items.includes("green_set") && allSameColor("Yeşil")) totalBonus += 70;
+    if (items.includes("blue_set") && allSameColor("Mavi")) totalBonus += 70;
+
+    if (items.includes("three_power") && numberCount[3]) totalBonus += 20 * numberCount[3];
+    if (items.includes("five_power") && numberCount[5]) totalBonus += 20 * numberCount[5];
+
+    if (items.includes("seven_legend") && boardSnapshot.length === 7) totalBonus += 1000;
+    if (items.includes("joker_dream") && jokerCount >= 2) totalBonus += 50;
+    if (items.includes("last_chance") && changeStonesRemaining === 0) totalBonus += 50;
+    if (items.includes("black_knight")) totalBonus += 20;
+
+    return totalBonus;
+}
+// MARKET & ÇİP SİSTEMİ EKLEMESİ SONU
+
+// === MARKETLİ UPDATE SCORE FONKSİYONU (orijinali silme, sadece override et) ===
+const _originalUpdateScore = updateScore;
+updateScore = function(points) {
+    score += points;
+    document.getElementById('score').innerText = `Puan: ${score}`;
+    if (score >= levelTargets[level - 1]) {
+        let chipWin = 10 + 2 * openSetRemaining;
+        userChips += chipWin;
+        renderChips();
+        showMessage(`Level ${level} tamamlandı! Marketten alışveriş yapabilirsin!`, 2100);
+        setTimeout(() => openMarket(), 1300);
+    }
+}
+
+// === MARKETLİ handleOpenSet (bonus puanları dahil) ===
+const _originalHandleOpenSet = handleOpenSet;
+handleOpenSet = function() {
+    if (gameOver) return;
+    if (openSetRemaining <= 0) {
+        showMessage("El açma hakkın bitti!", 1700);
+        checkGameOverAfterRights();
+        return;
+    }
+    if (board.length < 3) {
+        showMessage("En az 3 taş açmalısın!", 1700);
+        return;
+    }
+    let sets = findAllSets(board);
+    if (sets.length === 0) {
+        showMessage("Açılacak uygun set yok!", 1700);
+        return;
+    }
+    let boardSnapshot = board.slice();
+    let totalPoints = 0;
+    let allIndexes = [];
+    for (let set of sets) {
+        totalPoints += getSetPoints(set);
+        allIndexes = allIndexes.concat(set.indexes);
+    }
+    let bonus = calcSetBonusPoints(boardSnapshot);
+    if (bonus > 0)
+        showMessage(`Set(ler) açıldı! +${totalPoints} puan +${bonus} bonus!`, 1900);
+    else
+        showMessage(`${sets.length} set açıldı, +${totalPoints} puan!`, 1700);
+
+    updateScore(totalPoints + bonus);
+
+    allIndexes = Array.from(new Set(allIndexes));
+    allIndexes.sort((a,b)=>b-a).forEach(idx => board.splice(idx,1));
+    let toplamTas = istaka.length + board.length;
+    let eksik = istakaSize - toplamTas;
+    let newTiles = drawFromPool(eksik);
+    istaka = istaka.concat(newTiles);
+    openSetRemaining--;
+    renderOpenSetArea();
+    renderIstaka();
+    renderBoard();
+    renderChangeStonesArea();
+    if (openSetRemaining === 0) {
+        checkGameOverAfterRights();
+    }
+};
+
+// --- Oyun kaybedildiğinde market/çip sıfırla ---
+const _originalShowGameOver = showGameOver;
+showGameOver = function() {
+    gameOver = true;
+    document.getElementById('gameover-modal').style.display = "block";
+    showMessage("Oyunu kaybettin! Çip ve market eşyaların sıfırlandı.", 0);
+    resetGameProgress();
+}
+
+// --- startGame fonksiyonunda çip gösterimini de çağır ---
+const _originalStartGame = startGame;
+startGame = function() {
+    pool = createPool();
+    istaka = [];
+    board = [];
+    changeStonesRemaining = changeStonesMax;
+    openSetRemaining = openSetMax;
+    isChangingStones = false;
+    selectedForChange = [];
+    gameOver = false;
+    istaka = drawFromPool(istakaSize);
+    renderIstaka();
+    renderBoard();
+    renderTargetScore();
+    renderChangeStonesArea();
+    renderOpenSetArea();
+    renderChips();
+    document.getElementById('score').innerText = `Puan: ${score}`;
+    showMessage("Taşları sürükleyerek aç, el açınca puan kazanıp yeni taş alırsın.", 1800);
+    setupChangeStonesEvents();
+}
+
+// --- window.onload'da market modal butonunu bağla ---
+const _originalOnLoad = window.onload;
+window.onload = function() {
+    if (_originalOnLoad) _originalOnLoad();
+    if (document.getElementById('market-close-btn')) {
+        document.getElementById('market-close-btn').onclick = closeMarket;
+    }
+    renderChips();
+}
+
+// --- Havuzda Joker market etkisiyle değişmeli ---
+const _originalCreatePool = createPool;
+createPool = function() {
+    let arr = [];
+    for (const c of colors) {
+        for (const n of numbers) {
+            arr.push({ color: c, number: n });
+            arr.push({ color: c, number: n });
+        }
+    }
+    let jokerCount = 2;
+    if (ownedMarketItems.includes("joker_upgrade")) jokerCount = 4;
+    if (ownedMarketItems.includes("black_knight")) jokerCount = 0;
+    for(let i=0; i<jokerCount; i++) arr.push({ ...JOKER });
+    for (let i = arr.length - 1; i > 0; i--) {
+        let j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+}
+
+// Aktif Yükseltmeler butonuna tıklayınca açılan modal fonksiyonu
+function renderActiveUpgrades() {
+    const upgradesDiv = document.getElementById('active-upgrades-list');
+    if (!ownedMarketItems.length) {
+        upgradesDiv.innerHTML = '<i>Şu anda aktif bir yükseltme yok.</i>';
+        return;
+    }
+    let html = '';
+    ownedMarketItems.forEach(key => {
+        const item = ALL_MARKET_ITEMS.find(i => i.key === key);
+        if (!item) return;
+        html += `
+            <div class="market-item owned">
+                <div class="market-item-title">${item.name}</div>
+                <div class="market-item-desc">${item.desc}</div>
+            </div>
+        `;
+    });
+    upgradesDiv.innerHTML = html;
+}
+
+// Modal açma/kapama eventleri
+function setupUpgradesModalEvents() {
+    const modal = document.getElementById('upgrades-modal');
+    document.getElementById('show-upgrades-btn').onclick = () => {
+        renderActiveUpgrades();
+        modal.style.display = "block";
+    };
+    document.getElementById('close-upgrades-modal').onclick = () => {
+        modal.style.display = "none";
+    };
+    window.addEventListener('click', function(evt) {
+        if (evt.target === modal) modal.style.display = "none";
+    });
+}
+
+// window.onload içine şunu ekle:
+const _originalOnLoad2 = window.onload;
+window.onload = function() {
+    if (_originalOnLoad2) _originalOnLoad2();
+    setupUpgradesModalEvents();
+};
