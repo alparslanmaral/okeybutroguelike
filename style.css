@@ -77,7 +77,7 @@ h1 {
 #board, #istaka {
     display: flex;
     flex-direction: row;
-    justify-content: flex-start;
+    justify-content: center;
     align-items: flex-end;
     background: #f3f3fa;
     border-radius: 15px;
@@ -140,7 +140,7 @@ h1 {
 }
 .tile.istaka.selectable { cursor: pointer; box-shadow: 0 0 0 2.5px #6c63ff66; }
 .tile.istaka.selected {
-    border: 2.5px solid #ff9a3c;
+    border: 3.5px solid #ff0000;
     box-shadow: 0 0 0 4px #ff9a3c22;
 }
 
