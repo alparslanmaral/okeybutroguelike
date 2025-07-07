@@ -865,6 +865,11 @@ function buyMarketItem(key) {
     ownedMarketItems.push(item.key);
     renderMarket();
     renderChips();
+
+    // --- Buraya EKLE ---
+    changeStonesMax = getChangeStonesMax();
+    changeStonesRemaining = changeStonesMax;
+    renderChangeStonesArea();
 }
 function resetGameProgress() {
     userChips = 0;
