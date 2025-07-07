@@ -154,49 +154,107 @@ function findAllSeriesSets(tiles, usedArr) {
 }
 
 function findAllSets(boardTiles) {
-    let sets = [];
-    let used = Array(boardTiles.length).fill(false);
+    // Her taşın bir kez kullanılmasını garanti edecek şekilde, maksimum kapsayan (en fazla taşlı) set kombinasyonunu bulur.
+    function allSetCombos(tiles, used, soFar) {
+        let best = soFar.slice();
+        let anyFound = false;
 
-    // --- 1. GRUP SETLER ---
-    let unusedTiles = boardTiles.map((t, i) => ({...t, _idx: i}));
-    for (let groupLen = 5; groupLen >= 3; groupLen--) {
-        let candidates = unusedTiles.filter((t, i) => !used[t._idx] && !isJoker(t));
-        let uniqueNumbers = [...new Set(candidates.map(t => t.number))];
-        for (let num of uniqueNumbers) {
-            let groupTiles = [];
-            let colorsUsed = new Set();
-            for (let t of candidates) {
-                if (t.number === num && !isJoker(t) && !colorsUsed.has(t.color)) {
-                    groupTiles.push(t);
-                    colorsUsed.add(t.color);
+        // 1. Grup setleri (aynı sayı, farklı renk, 3-5 taş)
+        for (let groupLen = 5; groupLen >= 3; groupLen--) {
+            let candidates = tiles.map((t, i) => ({...t, _idx: i}))
+                .filter(t => !used[t._idx] && !isJoker(t));
+            let uniqueNumbers = [...new Set(candidates.map(t => t.number))];
+            for (let num of uniqueNumbers) {
+                let groupTiles = [];
+                let colorsUsed = new Set();
+                for (let t of candidates) {
+                    if (t.number === num && !isJoker(t) && !colorsUsed.has(t.color)) {
+                        groupTiles.push(t);
+                        colorsUsed.add(t.color);
+                    }
+                }
+                let jokers = tiles.map((t, i) => ({...t, _idx: i}))
+                    .filter(t => !used[t._idx] && isJoker(t));
+                for (let j = 0; j < jokers.length && groupTiles.length < groupLen; j++) {
+                    groupTiles.push(jokers[j]);
+                }
+                if (groupTiles.length === groupLen) {
+                    let nextUsed = used.slice();
+                    for (let t of groupTiles) nextUsed[t._idx] = true;
+                    let candidate = soFar.concat([{
+                        type: 'grup',
+                        tiles: groupTiles,
+                        indexes: groupTiles.map(t => t._idx)
+                    }]);
+                    let res = allSetCombos(tiles, nextUsed, candidate);
+                    if (totalUsed(res) > totalUsed(best)) best = res;
+                    anyFound = true;
                 }
             }
-            let jokers = unusedTiles.filter(t => !used[t._idx] && isJoker(t));
-            for (let j = 0; j < jokers.length && groupTiles.length < groupLen; j++) {
-                groupTiles.push(jokers[j]);
-            }
-            if (groupTiles.length === groupLen) {
-                groupTiles.sort((a,b) => isJoker(a) - isJoker(b));
-                sets.push({
-                    type: 'grup',
-                    tiles: groupTiles,
-                    indexes: groupTiles.map(t => t._idx)
-                });
-                for (let t of groupTiles) used[t._idx] = true;
+        }
+
+        // 2. Seri setleri (aynı renk/wrap-around, ardışık, en az 3 taş)
+        for (let color of colors) {
+            let colorTiles = tiles.map((t, i) => ({...t, _idx: i}))
+                .filter(t => (t.color === color || isJoker(t)) && !used[t._idx]);
+            if (colorTiles.length < 3) continue;
+            let numbers = colorTiles.filter(t => !isJoker(t));
+            let jokers = colorTiles.filter(t => isJoker(t));
+            let uniqNumbers = [...new Set(numbers.map(t => t.number))];
+            if (uniqNumbers.length === 0) continue;
+
+            for (let len = colorTiles.length; len >= 3; len--) {
+                for (let start = 1; start <= 13; start++) {
+                    let seq = [];
+                    for (let i = 0; i < len; i++) {
+                        seq.push(((start + i - 1) % 13) + 1);
+                    }
+                    let missing = seq.filter(n => !uniqNumbers.includes(n)).length;
+                    if (missing <= jokers.length) {
+                        let foundTiles = [];
+                        let usedIdxs = [];
+                        let jokerUsed = 0;
+                        for (let n of seq) {
+                            let idx = numbers.findIndex(t => t.number === n && !usedIdxs.includes(t._idx));
+                            if (idx !== -1) {
+                                foundTiles.push(numbers[idx]);
+                                usedIdxs.push(numbers[idx]._idx);
+                            } else if (jokerUsed < jokers.length) {
+                                foundTiles.push(jokers[jokerUsed]);
+                                jokerUsed++;
+                            }
+                        }
+                        // Aynı seti tekrar deneme
+                        let alreadyUsed = foundTiles.some(t => used[t._idx]);
+                        if (foundTiles.length === len && !alreadyUsed) {
+                            let nextUsed = used.slice();
+                            for (let t of foundTiles) nextUsed[t._idx] = true;
+                            let candidate = soFar.concat([{
+                                type: 'seri',
+                                tiles: foundTiles,
+                                indexes: foundTiles.map(t => t._idx)
+                            }]);
+                            let res = allSetCombos(tiles, nextUsed, candidate);
+                            if (totalUsed(res) > totalUsed(best)) best = res;
+                            anyFound = true;
+                        }
+                    }
+                }
             }
         }
+
+        return best;
     }
-    // --- 2. SERİ SETLER (3+ taş, sıralı/wrap, renk aynı, joker destekli) ---
-    let seriSets = findAllSeriesSets(boardTiles, used);
-    for (let s of seriSets) {
-        sets.push({
-            type: s.type,
-            tiles: s.tiles,
-            indexes: s.indexes
-        });
-        for (let idx of s.indexes) used[idx] = true;
+    function totalUsed(sets) {
+        // Kaç taş kapsandı
+        let all = [];
+        sets.forEach(s => all = all.concat(s.indexes));
+        return new Set(all).size;
     }
-    return sets;
+
+    // Her taş bir kere kullanılmalı, maksimum toplam kapsama aranmalı
+    let used = Array(boardTiles.length).fill(false);
+    return allSetCombos(boardTiles, used, []);
 }
 function getSetPoints(set) {
     return set.tiles.length * 10;
@@ -700,10 +758,13 @@ function renderChips() {
 // Market ürünleri arayüzü
 function renderMarket() {
     const marketDiv = document.getElementById('market-items');
+    const chipDiv = document.getElementById('market-chip-count');
+    const ownedDiv = document.getElementById('market-owned-list');
     marketDiv.innerHTML = "";
+    chipDiv.innerHTML = `Çip: ${userChips} <span class="chip-emoji">🟡</span>`;
     nextMarketItems.forEach(key => {
         const item = ALL_MARKET_ITEMS.find(i => i.key === key);
-        if (!item) return; // <-- HATALI KEY VARSA ATLAR
+        if (!item) return;
         const owned = ownedMarketItems.includes(key);
         const itemDiv = document.createElement('div');
         itemDiv.className = "market-item" + (owned ? " owned" : "");
@@ -724,8 +785,34 @@ function renderMarket() {
             buyMarketItem(btn.getAttribute("data-key"));
         };
     });
+
+    // Owned Upgrades listesi ve sat butonu
+    ownedDiv.innerHTML = '';
+    if (ownedMarketItems.length > 0) {
+        ownedMarketItems.forEach(key => {
+            const item = ALL_MARKET_ITEMS.find(i => i.key === key);
+            if (!item) return;
+            const row = document.createElement('div');
+            row.className = 'market-owned-row';
+            row.innerHTML = `
+                <span class="market-owned-name">${item.name}</span>
+                <button class="btn sell-btn" data-key="${key}">Sat (+${Math.floor(item.price/2)} 🟡)</button>
+            `;
+            row.querySelector('.sell-btn').onclick = () => {
+                userChips += Math.floor(item.price/2);
+                ownedMarketItems = ownedMarketItems.filter(x => x !== key);
+                renderMarket();
+                renderChips();
+            };
+            ownedDiv.appendChild(row);
+        });
+    } else {
+        ownedDiv.innerHTML = '<i>Hiç geliştirmen yok.</i>';
+    }
+
     renderChips();
 }
+
 function getRandomMarketItems() {
     const available = ALL_MARKET_ITEMS.filter(item =>
         !ownedMarketItems.includes(item.key)
@@ -905,11 +992,48 @@ startGame = function() {
 const _originalOnLoad = window.onload;
 window.onload = function() {
     if (_originalOnLoad) _originalOnLoad();
+    // Market kapatma
     if (document.getElementById('market-close-btn')) {
         document.getElementById('market-close-btn').onclick = closeMarket;
     }
+
+    // Baştan Başla butonu ve modalı
+    if (document.getElementById('reset-game-btn')) {
+        document.getElementById('reset-game-btn').onclick = function() {
+            document.getElementById('reset-modal').style.display = 'block';
+        };
+    }
+    if (document.getElementById('reset-no-btn')) {
+        document.getElementById('reset-no-btn').onclick = function() {
+            document.getElementById('reset-modal').style.display = 'none';
+        };
+    }
+    if (document.getElementById('reset-yes-btn')) {
+        document.getElementById('reset-yes-btn').onclick = function() {
+            location.reload();
+        };
+    }
+    window.addEventListener('click', function(evt) {
+        const modal = document.getElementById('reset-modal');
+        if (evt.target === modal) modal.style.display = "none";
+    });
+
+    // Aktif Yükseltmeler butonu ve modalı
+    if (document.getElementById('show-upgrades-btn')) {
+        document.getElementById('show-upgrades-btn').onclick = function() {
+            document.getElementById('upgrades-modal').style.display = 'block';
+        }
+    }
+    if (document.getElementById('close-upgrades-modal')) {
+        document.getElementById('close-upgrades-modal').onclick = function() {
+            document.getElementById('upgrades-modal').style.display = 'none';
+        }
+    }
+    // Diğer gerekli buton ve modal bağlamalarını da burada yapabilirsin.
+
     renderChips();
-}
+};
+
 
 // --- Havuzda Joker market etkisiyle değişmeli ---
 const _originalCreatePool = createPool;

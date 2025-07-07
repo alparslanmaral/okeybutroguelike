@@ -50,19 +50,33 @@
                 <div id="active-upgrades-list"></div>
             </div>
         </div>
+        <button id="reset-game-btn">Baştan Başla</button>
         <!-- MARKET MODALI (MARKET/ÇİP SİSTEMİ EKLEMESİ) -->
         <div id="market-modal" class="modal">
-            <div class="market-modal-content">
-                <h2>Market</h2>
-                <div id="market-items"></div>
-                <button id="market-close-btn" class="btn market-close-btn">Sonraki Seviyeye Geç</button>
-            </div>
+          <div class="market-modal-content">
+               <h2>Market</h2>
+               <div id="market-chip-count"></div> <!-- BURAYI ekle! -->
+               <div id="market-items"></div>
+               <div id="market-owned-list"></div>
+               <button id="market-close-btn" class="btn market-close-btn">Sonraki Seviyeye Geç</button>
+               </div>
         </div>
         <div id="gameover-modal">
             <div id="gameover-content">
                 <h2>Oyunu Kaybettin!</h2>
                 <p>El açma veya taş değiştirme hakkın bitti, kalan taşlarla set çıkaramıyorsun.<br><br>Tekrar denemek için tıkla.</p>
                 <button id="restart-btn">Tekrar Dene</button>
+            </div>
+        </div>
+
+        <div id="reset-modal" class="modal">
+            <div class="modal-content">
+                <h2>Baştan Başla</h2>
+                <p>Tüm ilerlemeniz ve çipleriniz sıfırlanacak. Emin misiniz?</p>
+                <div style="margin-top:16px;text-align:right;">
+                    <button id="reset-no-btn" class="btn cancel-btn">Hayır</button>
+                    <button id="reset-yes-btn" class="btn" style="margin-left:10px;">Evet</button>
+                </div>
             </div>
         </div>
     </div>

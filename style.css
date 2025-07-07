@@ -379,6 +379,14 @@ h1 {
     font-size: 1.11rem;
 }
 
+#market-chip-count {
+    font-size: 1.1rem;
+    color: #ffb43c;
+    font-weight: 700;
+    margin-bottom: 6px;
+    text-align: center;
+}
+
 #gameover-modal {
     display: none;
     position: fixed;
@@ -435,6 +443,17 @@ h1 {
         padding-left: 2vw;
         padding-right: 2vw;
     }
+    #istaka {
+    background: #fff5e4;
+    border: 2.5px solid #ff9a3c33;
+    margin-bottom: 28px;
+    min-height: 100px; /* Eskiden 76px idi, artık daha yüksek */
+    display: flex;
+    flex-direction: row;
+    justify-content: center; /* Ortada hizalamak için */
+    align-items: flex-end;
+    /* diğer stiller aynı kalabilir */
+    }
     .tile {
         width: 32px;
         height: 44px;
@@ -463,3 +482,48 @@ h1 {
     transition: background 0.14s;
     min-width: 120px;
 }
+
+#market-owned-list {
+    border-top: 1.5px solid #eee;
+    margin-top: 18px;
+    padding-top: 10px;
+    font-size: .98rem;
+}
+.market-owned-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 7px;
+    justify-content: space-between;
+}
+.market-owned-name {
+    font-weight: 600;
+    color: #263159;
+}
+.btn.sell-btn {
+    background: #f45a5a;
+    color: #fff;
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-size: .95rem;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+}
+.btn.sell-btn:active { background: #b83434; }
+
+#reset-game-btn {
+    margin-top: 20px;
+    background: #f45a5a;
+    color: #fff;
+    font-weight: 700;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 30px;
+    font-size: 1.07rem;
+    box-shadow: 0 2px 8px #f45a5a33;
+    cursor: pointer;
+    transition: background 0.14s;
+    min-width: 120px;
+}
+#reset-game-btn:active { background: #b83434; }
