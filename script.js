@@ -7,8 +7,8 @@ const JOKER = { color: "Joker", number: 0 };
 
 const levelTargets = [50, 120, 200, 300, 410, 570, 750, 900, 1200, 2000];
 const levelMax = levelTargets.length;
-const changeStonesMax = 10;
-const openSetMax = 5;
+const changeStonesMax = 100;
+const openSetMax = 50;
 
 let pool = [];
 let istaka = [];
@@ -557,6 +557,8 @@ function renderTargetScore(){
     document.getElementById('target-score').innerText = `Seviye: ${level} / 10 — Hedef Puan: ${levelTargets[level-1]}`;
 }
 function checkGameOverAfterRights() {
+    // Eğer seviye tamamlandıysa kaybettirme!
+    if (score >= levelTargets[level - 1]) return;
     let allHand = istaka.slice();
     if (findAllSets(allHand).length === 0) {
         showGameOver();
@@ -698,10 +700,11 @@ function renderTargetScore(){
     document.getElementById('target-score').innerText = `Seviye: ${level} / 10 — Hedef Puan: ${levelTargets[level-1]}`;
 }
 
-function startGame(){
+function startGame() {
     pool = createPool();
     istaka = [];
     board = [];
+    changeStonesMax = getChangeStonesMax(); // <--- güncel taş değiştirme hakkı
     changeStonesRemaining = changeStonesMax;
     openSetRemaining = openSetMax;
     isChangingStones = false;
@@ -713,6 +716,7 @@ function startGame(){
     renderTargetScore();
     renderChangeStonesArea();
     renderOpenSetArea();
+    renderChips();
     document.getElementById('score').innerText = `Puan: ${score}`;
     showMessage("Taşları sürükleyerek aç, el açınca puan kazanıp yeni taş alırsın.", 1800);
     setupChangeStonesEvents();
@@ -746,8 +750,20 @@ const ALL_MARKET_ITEMS = [
     { key: "seven_legend", name: "Birimiz Hepimiz, Hepimiz Birimiz", price: 10, desc: "7 taşlık bir el açtığında ekstra 1000 puan kazanılır." },
     { key: "joker_dream", name: "Joker'in Rüyası", price: 8, desc: "En az 2 Joker kullanılarak açılan ellerde ekstra 50 puan kazanılır." },
     { key: "last_chance", name: "Günü Kurtar", price: 10, desc: "Hiç taş değiştirme hakkı yokken el açılırsa ekstra 50 puan kazanılır." },
-    { key: "black_knight", name: "Kara Şövalye Yükseliyor", price: 5, desc: "Havuzdaki Joker sayısı 0 olur ama açılan her elde ekstra 20 puan kazanılır." }
+    { key: "black_knight", name: "Kara Şövalye Yükseliyor", price: 5, desc: "Havuzdaki Joker sayısı 0 olur ama açılan her elde ekstra 20 puan kazanılır." },
+    { key: "justice", name: "Hak, Hukuk, Adalet!", price: 18, desc: "Taş değiştirme hakkını kalıcı olarak 5 artır." },
+    { key: "harley", name: "Harley Quinn", price: 7, desc: "Joker kullanılarak açılan ellerde kullanılan her Joker başına 35 puan kazanılacak." },
+    { key: "super_boost", name: "Süper Yükseltme", price: 20, desc: "Açılan her elden ekstra 45 puan kazanılacak." },
+    { key: "alex", name: "Alex De Souza", price: 6, desc: "10 sayısındaki taşlar kullanılarak açılan ellerde (renk fark etmez) kullanılan 10 sayılı taş başına 20 puan kazanılacak." },
+    { key: "alone", name: "Yalnızım Dostlarım", price: 12, desc: "Tek sayı taşlar kullanılarak açılan ellerde (renk fark etmez) kullanılan tek sayılı taş başına 10 puan kazanılacak." },
+    { key: "sugar_daddy", name: "Sugar Daddy", price: 5, desc: "Her el açtığında fazladan 1 çip kazanılacak." }
 ];
+
+function getChangeStonesMax() {
+    let base = 10;
+    if (ownedMarketItems.includes("justice")) base += 5;
+    return base;
+}
 
 // Çip gösterimi
 function renderChips() {
@@ -889,6 +905,18 @@ function calcSetBonusPoints(boardSnapshot) {
     if (items.includes("last_chance") && changeStonesRemaining === 0) totalBonus += 50;
     if (items.includes("black_knight")) totalBonus += 20;
 
+    // --- Yeni Market Ürünleri ---
+    // Harley Quinn: Joker ile açılan ellerde her joker başına 35 puan
+    if (items.includes("harley") && jokerCount > 0) totalBonus += 35 * jokerCount;
+    // Süper Yükseltme: Açılan her elden +45 puan
+    if (items.includes("super_boost")) totalBonus += 45;
+    // Alex De Souza: 10 sayılı taş başına 20 puan
+    if (items.includes("alex") && numberCount[10]) totalBonus += 20 * numberCount[10];
+    // Yalnızım Dostlarım: Tek sayı taş başına 10 puan
+    if (items.includes("alone")) {
+        let oddCount = Object.keys(numberCount).filter(n=>parseInt(n)%2===1).reduce((acc, n)=>acc+numberCount[n],0);
+        totalBonus += 10 * oddCount;
+    }
     return totalBonus;
 }
 // MARKET & ÇİP SİSTEMİ EKLEMESİ SONU
@@ -902,8 +930,12 @@ updateScore = function(points) {
         let chipWin = 10 + 2 * openSetRemaining;
         userChips += chipWin;
         renderChips();
-        showMessage(`Level ${level} tamamlandı! Marketten alışveriş yapabilirsin!`, 2100);
-        setTimeout(() => openMarket(), 1300);
+        if (level === levelMax) {
+            showFinalModal(); // Final ekranı aç
+        } else {
+            showMessage(`Level ${level} tamamlandı! Marketten alışveriş yapabilirsin!`, 2100);
+            setTimeout(() => openMarket(), 1300);
+        }
     }
 }
 
@@ -933,6 +965,13 @@ handleOpenSet = function() {
         allIndexes = allIndexes.concat(set.indexes);
     }
     let bonus = calcSetBonusPoints(boardSnapshot);
+
+    // --- Sugar Daddy bonus çip ---
+    if (ownedMarketItems.includes("sugar_daddy")) {
+        userChips += 1;
+        renderChips();
+    }
+
     if (bonus > 0)
         showMessage(`Set(ler) açıldı! +${totalPoints} puan +${bonus} bonus!`, 1900);
     else
@@ -955,6 +994,10 @@ handleOpenSet = function() {
         checkGameOverAfterRights();
     }
 };
+
+function showFinalModal() {
+    document.getElementById('final-modal').style.display = "block";
+}
 
 // --- Oyun kaybedildiğinde market/çip sıfırla ---
 const _originalShowGameOver = showGameOver;
