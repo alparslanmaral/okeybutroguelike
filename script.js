@@ -7,8 +7,8 @@ const JOKER = { color: "Joker", number: 0 };
 
 const levelTargets = [50, 120, 200, 300, 410, 570, 750, 900, 1200, 2000];
 const levelMax = levelTargets.length;
-const changeStonesMax = 100;
-const openSetMax = 50;
+const changeStonesMax = 10;
+const openSetMax = 5;
 
 let pool = [];
 let istaka = [];
