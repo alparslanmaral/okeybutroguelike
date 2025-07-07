@@ -932,7 +932,7 @@ updateScore = function(points) {
     score += points;
     document.getElementById('score').innerText = `Puan: ${score}`;
     if (score >= levelTargets[level - 1]) {
-        let chipWin = 10 + 2 * openSetRemaining;
+        let chipWin = 15 + 2 * openSetRemaining;
         userChips += chipWin;
         renderChips();
         if (level === levelMax) {
