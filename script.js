@@ -5,6 +5,19 @@ const numbers = [1,2,3,4,5,6,7,8,9,10,11,12,13];
 const istakaSize = 7;
 const JOKER = { color: "Joker", number: 0 };
 
+function getTileImage(tile) {
+    if (tile.color === "Joker") return "img/joker.webp";
+    const renk = tile.color
+        .toLowerCase()
+        .replace(/ı/g, "i")
+        .replace(/ş/g, "s")
+        .replace(/ğ/g, "g")
+        .replace(/ü/g, "u")
+        .replace(/ö/g, "o")
+        .replace(/ç/g, "c");
+    return `img/${renk}-${tile.number}.webp`;
+}
+
 const levelTargets = [50, 120, 200, 300, 410, 570, 750, 900, 1200, 2000];
 const levelMax = levelTargets.length;
 let changeStonesMax = 10;
@@ -269,11 +282,16 @@ function renderIstaka() {
     istaka.forEach((tile, idx) => {
         const el = document.createElement('div');
         el.className = 'tile istaka';
-        el.style.background = colorCodes[tile.color];
-        el.style.color = tile.color === 'Siyah' ? '#fff' : '#222';
-        el.innerText = isJoker(tile) ? "🃏" : tile.number;
         el.title = isJoker(tile) ? "Joker" : tile.color + ' ' + tile.number;
         el.setAttribute('draggable', String(!isChangingStones && !gameOver));
+
+        // Görsel ekle
+        el.innerHTML = '';
+        const img = document.createElement('img');
+        img.src = getTileImage(tile);
+        img.alt = isJoker(tile) ? 'Joker' : `${tile.color} ${tile.number}`;
+        img.className = 'tile-img';
+        el.appendChild(img);
 
         if (isChangingStones) {
             el.classList.add('selectable');
@@ -319,11 +337,17 @@ function renderBoard(){
     board.forEach((tile, idx) => {
         const el = document.createElement('div');
         el.className = 'tile board';
-        el.style.background = colorCodes[tile.color];
-        el.style.color = tile.color === 'Siyah' ? '#fff' : '#222';
-        el.innerText = isJoker(tile) ? "🃏" : tile.number;
         el.title = isJoker(tile) ? "Joker" : tile.color + ' ' + tile.number;
         el.setAttribute('draggable', String(!gameOver));
+
+        // Görsel ekle
+        el.innerHTML = '';
+        const img = document.createElement('img');
+        img.src = getTileImage(tile);
+        img.alt = isJoker(tile) ? 'Joker' : `${tile.color} ${tile.number}`;
+        img.className = 'tile-img';
+        el.appendChild(img);
+
         el.addEventListener('dragstart', (e) => {
             if (isTouchDragging || gameOver) return;
             dragSource = tile;
@@ -427,7 +451,12 @@ function handleTouchStart(e, tile, idx, from) {
     ghost.style.width = '48px';
     ghost.style.height = '68px';
     ghost.style.zIndex = '9999';
-    ghost.innerText = isJoker(tile) ? "🃏" : tile.number;
+    ghost.innerHTML = '';
+    const ghostImg = document.createElement('img');
+    ghostImg.src = getTileImage(tile);
+    ghostImg.alt = isJoker(tile) ? 'Joker' : `${tile.color} ${tile.number}`;
+    ghostImg.className = 'tile-img';
+    ghost.appendChild(ghostImg);
     document.body.appendChild(ghost);
     document.body.addEventListener('touchmove', handleTouchMove, { passive: false });
     document.body.addEventListener('touchend', handleTouchEnd, { passive: false });
