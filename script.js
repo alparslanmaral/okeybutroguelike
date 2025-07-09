@@ -1,5 +1,38 @@
 // === OKEY OYUNU TAM SÜRÜM (DÜZELTİLMİŞ WRAP-AROUND SERİ SET DESTEĞİ İLE) ===
 
+const colorCodesForImg = ['kirmizi','siyah','yesil','mavi'];
+const numbersForImg = [1,2,3,4,5,6,7,8,9,10,11,12,13];
+const allTileImages = [];
+colorCodesForImg.forEach(color => {
+  numbersForImg.forEach(num => {
+    allTileImages.push(`img/${color}-${num}.webp`);
+  });
+});
+allTileImages.push("img/joker.webp");
+
+function preloadTileImages() {
+  return Promise.all(allTileImages.map(src => new Promise(res => {
+    // Eğer localStorage'da zaten varsa atla
+    if (localStorage.getItem('tileImageLoaded_' + src)) return res();
+    const img = new Image();
+    img.src = src;
+    img.onload = () => {
+      localStorage.setItem('tileImageLoaded_' + src, '1');
+      res();
+    };
+    img.onerror = () => res(); // hata olursa yine de devam
+  })));
+}
+
+// Sürüm kontrolü, görselleri değiştirirsen cache temizler
+const TILE_IMAGE_CACHE_VERSION = 'v1';
+if (localStorage.getItem('tileImageCacheVersion') !== TILE_IMAGE_CACHE_VERSION) {
+  Object.keys(localStorage).forEach(key => {
+    if (key.startsWith('tileImageLoaded_')) localStorage.removeItem(key);
+  });
+  localStorage.setItem('tileImageCacheVersion', TILE_IMAGE_CACHE_VERSION);
+}
+
 const colors = ['Kırmızı', 'Siyah', 'Yeşil', 'Mavi'];
 const numbers = [1,2,3,4,5,6,7,8,9,10,11,12,13];
 const istakaSize = 7;
@@ -758,11 +791,16 @@ function startGame() {
 }
 
 window.onload = function() {
-    startGame();
-    setupDroppableAreas();
-    document.getElementById('open-set-btn').onclick = handleOpenSet;
-    setupPoolModalEvents();
-    document.getElementById('restart-btn').onclick = hideGameOver;
+    document.getElementById('preloader').style.display = 'flex';
+    preloadTileImages().then(() => {
+        document.getElementById('preloader').style.display = 'none';
+
+        startGame();
+        setupDroppableAreas();
+        document.getElementById('open-set-btn').onclick = handleOpenSet;
+        setupPoolModalEvents();
+        document.getElementById('restart-btn').onclick = hideGameOver;
+    });
 };
 
 // CHIP/MARKET DEĞİŞKENLERİ

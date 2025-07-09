@@ -563,3 +563,31 @@ h1 {
   z-index: 2;
   transition: transform 0.18s;
 }
+
+#preloader {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100vw; height: 100vh;
+  background: #f6f7fa;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.loader {
+  border: 7px solid #eee;
+  border-top: 7px solid #6c63ff;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { 100% { transform: rotate(360deg); } }
+.loader-text {
+  margin-top: 20px;
+  color: #263159;
+  font-weight: bold;
+  font-size: 1.22rem;
+  letter-spacing: 1px;
+}
