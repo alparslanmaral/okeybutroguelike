@@ -282,6 +282,12 @@ function renderIstaka() {
     istaka.forEach((tile, idx) => {
         const el = document.createElement('div');
         el.className = 'tile istaka';
+
+        // Sallanma animasyonu
+        if (isChangingStones) el.classList.add('shake');
+        // Seçili taş yukarı kalksın
+        if (selectedForChange.includes(idx)) el.classList.add('selected');
+
         el.title = isJoker(tile) ? "Joker" : tile.color + ' ' + tile.number;
         el.setAttribute('draggable', String(!isChangingStones && !gameOver));
 
@@ -295,7 +301,6 @@ function renderIstaka() {
 
         if (isChangingStones) {
             el.classList.add('selectable');
-            if (selectedForChange.includes(idx)) el.classList.add('selected');
             el.onclick = () => {
                 if (selectedForChange.includes(idx)) {
                     selectedForChange = selectedForChange.filter(i => i !== idx);
@@ -331,6 +336,7 @@ function renderIstaka() {
         istakaDiv.appendChild(el);
     });
 }
+
 function renderBoard(){
     const boardDiv = document.getElementById('board');
     boardDiv.innerHTML = '';

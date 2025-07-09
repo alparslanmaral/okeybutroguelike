@@ -538,3 +538,28 @@ h1 {
         height: 68px !important;
     }
 }
+
+/* Sallanma animasyonu */
+@keyframes shake {
+  0% { transform: var(--tile-translate, translateY(0)) rotate(-2deg);}
+  10% { transform: var(--tile-translate, translateY(0)) rotate(2deg);}
+  20% { transform: var(--tile-translate, translateY(0)) rotate(-2deg);}
+  30% { transform: var(--tile-translate, translateY(0)) rotate(2deg);}
+  40% { transform: var(--tile-translate, translateY(0)) rotate(-2deg);}
+  50% { transform: var(--tile-translate, translateY(0)) rotate(2deg);}
+  60% { transform: var(--tile-translate, translateY(0)) rotate(-2deg);}
+  70% { transform: var(--tile-translate, translateY(0)) rotate(2deg);}
+  80% { transform: var(--tile-translate, translateY(0)) rotate(-2deg);}
+  90% { transform: var(--tile-translate, translateY(0)) rotate(2deg);}
+  100% { transform: var(--tile-translate, translateY(0)) rotate(-2deg);}
+}
+
+.tile.shake {
+  animation: shake 0.6s infinite;
+}
+
+.tile.selected {
+  --tile-translate: translateY(-20px);
+  z-index: 2;
+  transition: transform 0.18s;
+}
