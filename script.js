@@ -1140,6 +1140,11 @@ window.onload = function() {
         if (evt.target === modal) modal.style.display = "none";
     });
 
+    if (document.getElementById('final-restart-btn')) {
+        document.getElementById('final-restart-btn').onclick = function() {
+            location.reload();
+        };
+    }
     // Aktif Yükseltmeler butonu ve modalı
     if (document.getElementById('show-upgrades-btn')) {
         document.getElementById('show-upgrades-btn').onclick = function() {
